@@ -1,0 +1,32 @@
+// 线上验收（VOL.07）：字体、图片、四枚小样关键状态、HTTP 失败
+import { createRequire } from "node:module";
+const require = createRequire("D:/project/machine-skill/node_modules/");
+const { chromium } = require("playwright");
+const base = process.argv[2] || "https://starrysea1412.github.io/agent-skillcraft/";
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+const errors = [], failed = [];
+page.on("pageerror", (e) => errors.push(e.message));
+page.on("response", (r) => { if (r.status() >= 400) failed.push(r.status() + " " + r.url()); });
+await page.goto(base, { waitUntil: "networkidle", timeout: 60000 });
+await page.evaluate(() => document.fonts.ready);
+const font = await page.evaluate(() => document.fonts.check('16px "LXGW WenKai"'));
+const imgs = await page.evaluate(() => [...document.images].map((i) => i.getAttribute("src")));
+for (const src of imgs) { const r = await page.request.get(new URL(src, base).href); if (!r.ok()) failed.push(r.status() + " (img) " + src); }
+await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+await page.waitForTimeout(500);
+const lazy = await page.evaluate(() => [...document.images].filter((i) => i.naturalWidth === 0).map((i) => i.src));
+await page.evaluate(() => window.scrollTo(0, 0));
+await page.click('#anat-presets button[data-p="nodesc"]');
+await page.waitForTimeout(100);
+const d1 = await page.evaluate(() => ({ score: document.querySelector("#anat-num").textContent, warn: document.querySelector("#anat-warn").classList.contains("show") }));
+await page.click('#pipe-faults button[data-f="health"]');
+await page.waitForTimeout(100);
+const d3 = await page.evaluate(() => document.querySelector("#pipe-w").textContent.slice(0, 40));
+await page.evaluate(() => { const s = document.querySelector("#sup-secret"); if (!s.checked) { s.checked = true; s.dispatchEvent(new Event("change", { bubbles: true })); } });
+const d4 = await page.evaluate(() => document.querySelector("#sup-blocked-secret").textContent);
+console.log("font:", font, "| images:", imgs.length, "| lazy-broken:", lazy.length ? lazy : "none");
+console.log("D1 nodesc:", JSON.stringify(d1), "| D3 health:", d3, "| D4 blocked-secret:", d4);
+console.log("pageerrors:", errors.length ? errors : "none");
+console.log("http failures:", failed.length ? failed : "none");
+await browser.close();
