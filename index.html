@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="color-scheme" content="light"/>
+<meta name="theme-color" content="#ece4d2"/>
+<link rel="preload" href="assets/fonts/wenkai-regular.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23ece4d2'/%3E%3Crect x='4' y='8' width='16' height='12' rx='1' fill='none' stroke='%232b5f5a' stroke-width='1.4'/%3E%3Cpath d='M4 8l8-4.5L20 8M4 8l8 4 8-4M12 12v8' fill='none' stroke='%232b5f5a' stroke-width='1.2'/%3E%3Cpath d='M9 12.5h6' stroke='%23a03b2a' stroke-width='1.4'/%3E%3C/svg%3E"/>
+<meta name="description" content="把能力打包成技能：从一段私有提示词到一个可分发、可审计的能力包。SKILL.md 解剖、退出码契约、零依赖脚本、发布流水线与供应链治理，附四枚可玩小样。"/>
+<meta name="author" content="StarrySea1412"/>
+<meta property="og:title" content="把能力打包成技能 · 造物手记 VOL.07"/>
+<meta property="og:description" content="80 行文档 + 239 行零依赖脚本，能力第一次离开作者。description 是最贵的五十个词。"/>
+<meta property="og:type" content="article"/>
+<meta property="og:image" content="assets/art/hero.webp"/>
+<title>把能力打包成技能 · 造物手记 VOL.07</title>
+<style>
+/* 《把能力打包成技能》· 造物手记 VOL.07
+   kraft 快递工坊：牛皮纸、封箱红绳、水洗标签——能力被打包、贴单、发往别人家。 */
+@font-face{font-family:"LXGW WenKai";src:url("assets/fonts/wenkai-regular.woff2") format("woff2");font-weight:300 599;font-style:normal;font-display:swap}
+@font-face{font-family:"LXGW WenKai";src:url("assets/fonts/wenkai-medium.woff2") format("woff2");font-weight:600 900;font-style:normal;font-display:swap}
+:root{
+  --kraft:#ece4d2;--paper:#f6f1e6;--surface:#fbf8f0;--ink:#241f18;--ink-soft:#4a4237;--muted:#7a705f;--faint:#9a917e;
+  --line:#d9cfba;--line-soft:#e8e0cd;
+  --teal:#2b5f5a;--teal-soft:#dfeae6;--teal-deep:#1d4540;
+  --ox:#a03b2a;--ox-soft:#f3e0da;
+  --brass:#8a6a2f;--brass-soft:#f0e6cf;
+  --serif:"LXGW WenKai","Songti SC","STSong","Noto Serif CJK SC",serif;
+  --sans:"LXGW WenKai",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:28px}
+body{margin:0;background:var(--kraft);color:var(--ink);font-family:var(--sans);line-height:1.95;-webkit-font-smoothing:antialiased;text-spacing:ideograph-alpha;
+  background-image:radial-gradient(1100px 560px at 82% -6%,rgba(43,95,90,.07),transparent 60%),radial-gradient(820px 460px at 6% 10%,rgba(160,59,42,.05),transparent 58%)}
+::selection{background:#e8d3c2;color:#2a130c}
+a{color:var(--teal);text-underline-offset:4px;text-decoration-thickness:1px}
+a:hover{color:var(--ox)}
+button,a,input,select{touch-action:manipulation}
+button{cursor:pointer;color:inherit;font:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--brass);outline-offset:3px}
+img{display:block;max-width:100%;height:auto}
+p{margin:0 0 1.25em}
+h1,h2,h3,h4{line-height:1.45;text-wrap:balance;margin:0}
+h1,h2,h3{font-family:var(--serif)}
+strong{font-weight:650;color:#171310}
+code{font-family:var(--mono);font-size:.86em;background:var(--teal-soft);color:#24443f;padding:.12em .38em;border-radius:3px;overflow-wrap:anywhere}
+em{font-style:normal;color:var(--ox)}
+.progress{position:fixed;inset:0 auto auto 0;height:3px;width:100%;background:linear-gradient(90deg,var(--teal),var(--ox));transform:scaleX(0);transform-origin:left;z-index:60;pointer-events:none}
+.wrap{max-width:1180px;margin:auto;padding-inline:36px}
+.prose{max-width:768px;margin-inline:auto}
+
+/* masthead */
+.masthead{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-block:22px 16px;border-bottom:1.5px solid var(--ink);font-size:12px;letter-spacing:.1em;color:var(--muted)}
+.brand{display:flex;align-items:center;gap:11px;font-weight:650;color:var(--ink)}
+.brand-mark{width:24px;height:24px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:3px;background:var(--surface)}
+.brand-mark svg{width:15px;height:15px;display:block}
+.brand small{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ox);font-weight:700}
+.edition{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;display:flex;gap:14px;align-items:center}
+.edition .pack{display:inline-flex;align-items:center;gap:7px;color:var(--teal)}
+.pack-dot{width:8px;height:8px;border-radius:2px;background:var(--ox);transform:rotate(45deg)}
+
+/* hero */
+.hero{padding-block:56px 40px;display:grid;grid-template-columns:1.04fr .96fr;gap:52px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted);margin:0 0 24px;background:var(--surface);border:1px dashed var(--brass);padding:6px 13px 6px 8px;border-radius:2px}
+.eyebrow span{color:var(--ox);letter-spacing:.16em;font-weight:700;padding-right:11px;border-right:1px dashed var(--brass)}
+.hero h1{font-size:clamp(46px,5.2vw,74px);font-weight:800;line-height:1.12;letter-spacing:-.04em;margin:0 0 20px}
+.hero h1 em{color:var(--teal)}
+.hero h1 .sub{display:block;font-size:.4em;font-weight:400;letter-spacing:.02em;color:var(--ink-soft);margin-top:14px;line-height:1.7}
+.dek-wrap{margin:0 0 26px;max-width:560px;border-left:3px solid var(--teal);padding-left:20px}
+.dek-tag{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--teal);letter-spacing:.09em;margin:0 0 9px}
+.dek{font-size:16.5px;line-height:1.92;color:var(--ink-soft);margin:0}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--muted);border:1px solid var(--line);border-radius:2px;padding:6px 11px;background:var(--surface)}
+.pill b{color:var(--ink);font-weight:700}
+.art{margin:0;position:relative}
+.screen{border:1.5px solid var(--ink);background:var(--surface);padding:9px;box-shadow:9px 10px 0 rgba(138,106,47,.14)}
+.screen-img{position:relative;overflow:hidden;background:#171310}
+.screen-img img{width:100%;aspect-ratio:4/3;object-fit:cover;filter:saturate(.96)}
+.tc-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted);padding:9px 4px 2px}
+.tc-bar .tc{color:var(--ox)}
+.art figcaption{font-size:11.5px;color:var(--faint);margin-top:10px;line-height:1.7;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:var(--mono);letter-spacing:.03em}
+.art figcaption b{color:var(--teal);font-weight:700}
+
+/* stats */
+.stats{border-block:1.5px solid var(--ink);background:rgba(251,248,240,.72)}
+.stats-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}
+.stat{background:var(--surface);padding:16px 22px}
+.stat b{display:block;font-family:var(--mono);font-size:23px;letter-spacing:-.02em;color:var(--ink);line-height:1.25}
+.stat b span{font-size:11px;color:var(--faint);letter-spacing:.04em;margin-left:3px}
+.stat small{display:block;font-size:11px;color:var(--muted);letter-spacing:.04em;margin-top:3px}
+
+/* opening + toc */
+.opening{padding-block:50px 20px}
+.lead{font-size:19.5px;line-height:1.98;color:var(--ink)}
+.lead::first-letter{float:left;font-size:64px;line-height:.84;padding:9px 13px 0 0;color:var(--ox);font-weight:800}
+.scope{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:15px;margin-top:28px;font-family:var(--mono);line-height:1.85}
+.toc-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:9px;margin:32px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--faint)}
+.toc{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-top:0;margin:0 0 56px}
+.toc a{background:var(--surface);padding:14px 18px;text-decoration:none;color:var(--ink);display:grid;grid-template-columns:60px 1fr;gap:12px;align-items:baseline;transition:background .18s}
+.toc a:hover{background:var(--brass-soft);color:var(--ink)}
+.toc a i{font-family:var(--mono);font-style:normal;font-size:10.5px;color:var(--ox);letter-spacing:.04em}
+.toc a span{font-size:14px}
+.toc a small{display:block;font-size:11px;color:var(--faint);margin-top:2px;line-height:1.6}
+
+/* chapters */
+.chapter{padding-block:50px 18px;border-top:1px solid var(--line)}
+.ch-head{display:grid;grid-template-columns:92px 1fr;gap:22px;align-items:start;margin:0 auto 32px;max-width:980px}
+.ch-num{font-family:var(--mono);font-size:13px;color:var(--ox);letter-spacing:.08em;padding-top:13px;border-top:2px solid var(--ox);line-height:1.5}
+.ch-num b{display:block;font-size:34px;color:var(--ink);letter-spacing:-.02em;font-weight:700;line-height:1.1}
+.ch-title h2{font-size:clamp(30px,3.4vw,43px);font-weight:750;letter-spacing:-.025em;line-height:1.25}
+.ch-title p{color:var(--muted);font-size:14px;margin:9px 0 0;line-height:1.8;max-width:640px}
+.ch-body{max-width:768px;margin-inline:auto}
+.ch-body h3{font-size:22px;font-weight:700;margin:42px 0 14px;letter-spacing:-.01em;padding-left:13px;border-left:3px solid var(--teal)}
+.ch-body h4{font-size:16px;font-weight:650;margin:26px 0 8px;color:var(--brass)}
+.ch-body ul,.ch-body ol{padding-left:1.35em;margin:0 0 1.3em}
+.ch-body li{margin:.4em 0}
+.ch-body li::marker{color:var(--ox)}
+.lede{font-size:17px;color:var(--ink-soft);line-height:1.95}
+.pull{border-left:3px solid var(--ox);background:linear-gradient(90deg,var(--ox-soft),transparent 70%);padding:17px 22px;margin:28px 0;font-family:var(--serif);font-size:19px;line-height:1.85;color:var(--ink)}
+.pull b{color:var(--ox);font-weight:700}
+.note{font-size:13px;color:var(--muted);border-left:1px solid var(--line);padding-left:14px;margin:22px 0;line-height:1.85}
+.note b{color:var(--ink-soft)}
+.fig{margin:32px auto;max-width:980px;position:relative;left:50%;transform:translateX(-50%);width:min(940px,calc(100vw - 72px))}
+.fig .frame{border:1.5px solid var(--ink);background:var(--surface);padding:8px;box-shadow:7px 8px 0 rgba(138,106,47,.12)}
+.fig img{width:100%}
+.fig figcaption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em;margin-top:9px;line-height:1.75;display:flex;gap:10px;align-items:baseline}
+.fig figcaption b{color:var(--ox);font-weight:700}
+
+/* code */
+.code{margin:24px 0;border:1.5px solid var(--ink);background:#191512;overflow:hidden}
+.code-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 13px;border-bottom:1px solid #2c251f;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:#8d8272;background:#221c16}
+.code-bar b{color:#c9b98a;font-weight:600}
+.code pre{margin:0;padding:15px 16px 17px;overflow-x:auto;font-family:var(--mono);font-size:12.4px;line-height:1.77;color:#d6ccbb;tab-size:2}
+.code pre .c{color:#7d7362}
+.code pre .k{color:#e0a08b}
+.code pre .s{color:#a9c4a0}
+.code pre .n{color:#d9b26a}
+.code pre .f{color:#9dc0b6}
+
+/* formula */
+.formula{margin:26px 0;border:1.5px solid var(--ink);background:var(--surface);padding:18px 22px;text-align:center;box-shadow:5px 6px 0 rgba(138,106,47,.12)}
+.formula .eq{font-family:var(--mono);font-size:clamp(14px,1.8vw,18px);letter-spacing:.01em;color:var(--teal-deep);line-height:1.9}
+.formula .eq var{font-style:italic;color:var(--ox)}
+.formula small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.04em;margin-top:8px;line-height:1.7}
+.formula .why{font-size:13px;color:var(--muted);margin:11px auto 0;max-width:620px;line-height:1.8;text-align:left}
+
+/* table */
+.tablewrap{overflow-x:auto;margin:24px 0;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:560px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line-soft);vertical-align:top;line-height:1.7}
+th{background:#efe7d4;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+tr:last-child td{border-bottom:0}
+td b{color:#171310;font-weight:650}
+td code{font-size:11.5px}
+.num{font-family:var(--mono);font-size:12.5px;color:var(--ox);white-space:nowrap}
+
+/* demos */
+.demo{max-width:1000px;margin:42px auto;border:1.5px solid var(--ink);background:var(--surface);overflow:hidden;box-shadow:10px 12px 0 rgba(138,106,47,.12)}
+.demo-head{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 17px;border-bottom:1px solid var(--line);background:#efe7d4;flex-wrap:wrap}
+.demo-tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ox);font-weight:700}
+.demo-title{font-size:15px;font-weight:650;margin-left:auto;display:flex;align-items:center;gap:9px}
+.demo-title .hint{font-family:var(--mono);font-size:10px;color:var(--faint);font-weight:400;letter-spacing:.03em}
+.demo-body{padding:18px 18px 16px}
+.controls{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:flex-end;padding-bottom:14px;border-bottom:1px solid var(--line-soft);margin-bottom:14px}
+.ctl{min-width:150px;flex:1}
+.ctl label{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.ctl label b{color:var(--ox);font-weight:700;font-size:12px}
+input[type=range]{appearance:none;width:100%;height:24px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:var(--line);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:var(--teal);border:2px solid var(--surface);margin-top:-6px;box-shadow:0 0 0 1px var(--teal)}
+input[type=text],select{background:#fdfbf5;border:1px solid var(--line);border-radius:3px;padding:8px 10px;font-family:var(--sans);font-size:13.5px;color:var(--ink);width:100%}
+input[type=text]:focus,select:focus{outline:2px solid var(--brass);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);background:var(--surface);flex-wrap:wrap}
+.seg button{background:transparent;border:0;padding:6px 11px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.02em}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--teal);color:#f4faf8;font-weight:700}
+.switch{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.02em;cursor:pointer;user-select:none}
+.switch input{appearance:none;width:32px;height:17px;border-radius:9px;background:var(--line);position:relative;cursor:pointer;transition:background .18s}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--faint);transition:transform .18s,background .18s}
+.switch input:checked{background:#c4dcd3}
+.switch input:checked::after{transform:translateX(15px);background:var(--teal)}
+.hintline{font-family:var(--mono);font-size:10.5px;color:var(--faint);line-height:1.7;letter-spacing:.01em}
+.demo-foot{border-top:1px solid var(--line-soft);padding:10px 17px;font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.02em;line-height:1.75}
+.demo-foot b{color:var(--teal);font-weight:600}
+.big-num{display:flex;gap:26px;align-items:baseline;margin:2px 0 12px;flex-wrap:wrap}
+.big-num div{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--faint)}
+.big-num div b{display:block;font-size:26px;color:var(--ink);letter-spacing:-.02em;line-height:1.3}
+.big-num div b em{color:var(--ox);font-style:normal}
+
+/* D1 trigger */
+.trig-grid{display:grid;grid-template-columns:1fr 250px;gap:16px}
+.trig-rows{border:1px solid var(--line);background:#fdfbf5}
+.trow{display:grid;grid-template-columns:130px 1fr 92px;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+.trow:last-child{border-bottom:0}
+.trow .nm{font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:700;word-break:break-all}
+.trow .ds{font-size:12px;color:var(--ink-soft);line-height:1.6}
+.trow .sc{font-family:var(--mono);font-size:10px;text-align:right;color:var(--faint)}
+.trow .bar{height:5px;background:var(--line-soft);margin-top:4px;border-radius:2px;overflow:hidden}
+.trow .bar i{display:block;height:100%;background:var(--teal)}
+.trow.fire{background:var(--teal-soft)}
+.trow.fire .sc b{color:var(--teal);font-size:12px}
+.trow.fire .bar i{background:var(--ox)}
+.trig-side{border-left:1px solid var(--line-soft);padding-left:14px}
+.trig-side .verdict{font-family:var(--sans);font-size:12px;line-height:1.75;color:var(--ink-soft);background:var(--teal-soft);border-left:2px solid var(--teal);padding:8px 10px;margin-top:10px}
+.trig-side .row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);padding:5px 0;border-bottom:1px dashed var(--line-soft)}
+.trig-side .row b{color:var(--ink);font-weight:700}
+
+/* D2 anatomy */
+.anat{display:grid;grid-template-columns:1fr 300px;gap:16px}
+.anat-file{border:1.5px solid var(--ink);background:#fdfbf5;font-family:var(--mono);font-size:11.5px;line-height:1.8;overflow:hidden}
+.anat-file .fm{background:var(--brass-soft);padding:10px 13px;border-bottom:1px dashed var(--brass)}
+.anat-file .sec{padding:9px 13px;border-bottom:1px solid var(--line-soft)}
+.anat-file .sec:last-child{border-bottom:0}
+.anat-file .off{opacity:.32;text-decoration:line-through}
+.anat-file b{color:var(--teal)}
+.anat-file .tag{color:var(--ox)}
+.anat-side{border-left:1px solid var(--line-soft);padding-left:14px}
+.chk{display:flex;justify-content:space-between;gap:8px;align-items:center;font-family:var(--mono);font-size:10.5px;padding:7px 0;border-bottom:1px dashed var(--line-soft);color:var(--muted)}
+.chk b{font-size:11px}
+.chk.ok b{color:var(--teal)}
+.chk.bad b{color:var(--ox)}
+.anat-score{font-family:var(--mono);font-size:30px;color:var(--ink);margin-bottom:6px}
+.anat-score small{font-size:11px;color:var(--faint)}
+.anat-warn{margin-top:10px;font-family:var(--sans);font-size:12px;line-height:1.7;color:var(--ink-soft);background:var(--ox-soft);border-left:2px solid var(--ox);padding:8px 10px;display:none}
+.anat-warn.show{display:block}
+.tgl{display:inline-flex;border:1px solid var(--line);background:var(--surface)}
+.tgl button{background:transparent;border:0;padding:5px 10px;font-family:var(--mono);font-size:10px;color:var(--muted)}
+.tgl button+button{border-left:1px solid var(--line)}
+.tgl button.on{background:var(--teal);color:#f4faf8;font-weight:700}
+
+/* D3 pipeline */
+.pipe{display:grid;gap:7px;margin-bottom:12px}
+.step{display:grid;grid-template-columns:30px 1fr auto;gap:11px;align-items:center;border:1px solid var(--line);background:#fdfbf5;padding:10px 12px}
+.step .no{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.step .lbl b{display:block;font-size:13.5px}
+.step .lbl small{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.step .st{font-family:var(--mono);font-size:10px;padding:2px 8px;border:1px solid var(--line);color:var(--faint);white-space:nowrap}
+.step.ok{border-color:#b9d6c8;background:var(--teal-soft)}
+.step.ok .st{color:var(--teal);border-color:#9cc7b5}
+.step.bad{border-color:#e2b3ab;background:var(--ox-soft)}
+.step.bad .st{color:var(--ox);border-color:#d79a90}
+.pipe-out{border-top:1.5px solid var(--ink);padding-top:11px;display:grid;grid-template-columns:auto 1fr;gap:8px 16px;align-items:baseline}
+.pipe-out .v{font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.03em}
+.pipe-out .v.go{color:var(--teal)}
+.pipe-out .v.stop{color:var(--ox)}
+.pipe-out .w{font-family:var(--mono);font-size:10.5px;color:var(--muted);line-height:1.7}
+
+/* D4 supply */
+.sup-grid{display:grid;grid-template-columns:1fr 250px;gap:16px}
+.sup-table{border:1px solid var(--line);background:#fdfbf5;overflow-x:auto}
+.sup-table table{min-width:520px;font-size:12px}
+.sup-table td,.sup-table th{padding:7px 9px}
+.sup-table .yes{color:var(--ox);font-weight:700}
+.sup-table .no{color:var(--faint)}
+.sup-table tr.risk{background:var(--ox-soft)}
+.sup-side{border-left:1px solid var(--line-soft);padding-left:14px}
+.sup-side .num-line{font-family:var(--mono);font-size:26px;color:var(--ink);line-height:1.2}
+.sup-side .num-line small{font-size:11px;color:var(--faint)}
+.sup-side .row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);padding:5px 0;border-bottom:1px dashed var(--line-soft)}
+.sup-side .row b{color:var(--ink);font-weight:700}
+
+/* epilogue */
+.epilogue{max-width:768px;margin:0 auto;padding-block:38px 18px}
+.epilogue h2{font-size:clamp(28px,3vw,38px);margin-bottom:16px}
+.rules{display:grid;gap:10px;margin:24px 0 28px}
+.rule{border:1px solid var(--line);border-left:3px solid var(--teal);background:var(--surface);padding:14px 17px}
+.rule b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--teal);margin-bottom:5px}
+.rule p{margin:0;font-size:14.5px;color:var(--ink-soft);line-height:1.85}
+.limits{border-top:1px solid var(--line);padding-top:18px;font-size:13.5px;color:var(--muted)}
+.limits b{color:var(--ink-soft)}
+.links{display:flex;flex-wrap:wrap;gap:9px;margin:24px 0 8px}
+.links a{font-family:var(--mono);font-size:11px;letter-spacing:.03em;border:1px solid var(--line);padding:7px 12px;text-decoration:none;color:var(--teal);background:var(--surface)}
+.links a:hover{border-color:var(--ox);color:var(--ox)}
+
+.site-foot{border-top:1.5px solid var(--ink);margin-top:50px;padding-block:22px 36px;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--faint)}
+.site-foot a{color:var(--muted)}
+.foot-note{font-size:10.5px;color:#8a8171;line-height:1.8;max-width:580px}
+
+@media (max-width:980px){
+  .hero{grid-template-columns:1fr;gap:30px;padding-block:40px 30px}
+  .hero h1{font-size:clamp(40px,8vw,56px)}
+  .stats-inner{grid-template-columns:repeat(2,1fr)}
+  .ch-head{grid-template-columns:64px 1fr;gap:16px}
+  .ch-num b{font-size:26px}
+  .trig-grid,.anat,.sup-grid{grid-template-columns:1fr}
+  .trig-side,.anat-side,.sup-side{border-left:0;border-top:1px solid var(--line-soft);padding-left:0;padding-top:10px}
+  .toc{grid-template-columns:1fr}
+  .trow{grid-template-columns:100px 1fr 70px}
+}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .masthead{font-size:10px;letter-spacing:.05em}
+  .edition .pack{display:none}
+  .hero h1{font-size:38px}
+  .lead{font-size:17.5px}
+  .ch-head{grid-template-columns:1fr;gap:6px}
+  .ch-num{border-top:0;padding-top:0;display:flex;align-items:baseline;gap:10px}
+  .ch-num b{font-size:22px}
+  .ch-title h2{font-size:27px}
+  .ch-body h3{font-size:19px}
+  .demo-body{padding:12px}
+  .demo-title .hint{display:none}
+  .code pre{font-size:11.3px}
+  .trow{grid-template-columns:84px 1fr 58px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+@media print{body{background:#fff}.progress,.demo,.art,.links,.toc,.site-foot{display:none}}
+
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<header class="wrap masthead">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="16" height="12" rx="1" stroke="#2b5f5a" stroke-width="1.4"/><path d="M4 8l8-4.5L20 8" stroke="#2b5f5a" stroke-width="1.4"/><path d="M4 8l8 4 8-4M12 12v8" stroke="#a03b2a" stroke-width="1.2"/></svg></span>
+    <span>造物手记 <small>VOL.07</small></span>
+  </div>
+  <div class="edition">
+    <span class="pack"><i class="pack-dot" aria-hidden="true"></i>SKILL / 打包中</span>
+    <span>WORKBENCH 07 · 2026.10</span>
+  </div>
+</header>
+
+<section class="wrap hero">
+  <div>
+    <p class="eyebrow"><span>FIELD NOTES</span>一个可分发、可审计的能力包</p>
+    <h1>把能力<br/><em>打包成技能</em><span class="sub">从一段写在我系统提示里的流程，到任何人 <code style="font-size:.85em">clawhub install</code> 就能用的两个文件</span></h1>
+    <div class="dek-wrap">
+      <p class="dek-tag">本片提要</p>
+      <p class="dek">我给画境写生图流程写了半年，它一直只活在我自己的系统提示里。直到把它打包成两个文件——80 行的 SKILL.md 加 239 行的零依赖脚本——发布上技能市场，别人才第一次能用上它。这篇拆这次打包的全过程：frontmatter 怎么写、退出码怎么定、描述为什么是最贵的五十个词、以及 Snyk 那个 7.1% 的泄漏率意味着什么。</p>
+    </div>
+    <div class="hero-meta">
+      <span class="pill"><b>2</b> 个文件</span>
+      <span class="pill"><b>4</b> 个退出码</span>
+      <span class="pill"><b>0</b> 个 npm 依赖</span>
+      <span class="pill"><b>≈60s</b> 安全扫描</span>
+    </div>
+  </div>
+  <figure class="art">
+    <div class="screen">
+      <div class="screen-img">
+        <img src="assets/art/hero.webp" alt="纸鹤在打包工坊里给一只小木箱系上红绳，箱顶贴着空白水洗标签，身后是一排排同样的木箱" width="1152" height="832"/>
+      </div>
+      <div class="tc-bar"><span>PACKING / BENCH 07</span><span class="tc">1 SKILL &nbsp; 2 FILES &nbsp; 0 DEPS</span></div>
+    </div>
+    <figcaption><span><b>FIG. 00</b> 打包台：能力装进箱子，标签朝上，绳子系紧</span><span>INK &amp; GOUACHE / 2026</span></figcaption>
+  </figure>
+</section>
+
+<section class="stats" aria-label="关键数字">
+  <div class="wrap stats-inner">
+    <div class="stat"><b>80<span>行</span></b><small>SKILL.md 的全部长度</small></div>
+    <div class="stat"><b>239<span>行</span></b><small>零依赖脚本的实现</small></div>
+    <div class="stat"><b>3<span>个</span></b><small>脚本依赖的服务端点</small></div>
+    <div class="stat"><b>7.1<span>%</span></b><small>公开技能泄漏密钥的比例（Snyk）</small></div>
+  </div>
+</section>
+
+<div class="wrap opening">
+  <div class="prose">
+    <p class="lead">先交代背景。画境（AI Image Studio）是我本机跑的一个生图服务：管理自己的图像模型渠道，所有出图都进本地画廊，可重试、可审计。我在自己的 Agent 系统里用它生成了几百张图，流程烂熟于心——先探活、再提交、轮询到完成、把本地路径交回去。这套流程一直是<strong>我的</strong>能力：写在我的系统提示里，别人拿不到。</p>
+    <p>2026 年 10 月，我把它打包成了 <code>huajing-image-gen</code>：一个 <code>SKILL.md</code> 加一个零依赖的 Node 脚本，共 319 行，发布上 ClawHub 技能市场。 anyone <code>clawhub install</code> 之后，他们的 Agent 就能在画境上生图——不用读我的提示词，不用知道端口，服务没启动时还能收到一条「运行 start.bat」的可执行修复提示。</p>
+    <p>这次打包让我想清楚了一件事：<strong>提示词不是能力。</strong>提示词是私人的、不可分发的、没有契约的；技能是公共的、可安装的、带退出码和验收标准的。中间隔着四件事：可发现的描述、可执行的脚本、可恢复的错误、可审计的分发。这篇逐件拆。</p>
+    <p class="scope">阅读说明：全文约九千字，七章 + 四枚小样。第 1 章讲提示词与能力的三个差别；第 2 章解剖 SKILL.md；第 3 章写 description——最贵的五十个词；第 4 章拆零依赖脚本；第 5 章走发布流水线；第 6 章讲装到别人家之后的纪律；第 7 章讲供应链风险与治理。四枚小样都是确定性模型。</p>
+  </div>
+
+  <p class="toc-head"><span>WORKBENCH INDEX / 工位清单</span><span>07 SECTIONS · 04 DEMOS</span></p>
+  <nav class="toc" aria-label="目录">
+    <a href="#ch1"><i>01 / 00:00</i><span>提示词不是能力<small>分发、契约、审计——私藏与可安装之间隔着什么</small></span></a>
+    <a href="#ch2"><i>02 / 06:10</i><span>解剖一个 SKILL.md<small>80 行文档的六个部件，每一个都对应一种失败</small></span></a>
+    <a href="#ch3"><i>03 / 12:40</i><span>最贵的五十个词<small>description 是给机器读的：触发、误触发与泛化陷阱</small></span></a>
+    <a href="#ch4"><i>04 / 19:30</i><span>零依赖脚本<small>四个退出码、JSON 走 stdout、可执行的修复提示</small></span></a>
+    <a href="#ch5"><i>05 / 27:10</i><span>发布流水线<small>slug 就是文件夹名、≈60s 安全扫描、装到另一台机器验证</small></span></a>
+    <a href="#ch6"><i>06 / 35:00</i><span>装到别人家<small>安装 ≠ 启用：text-only 与 script-bearing 的分级治理</small></span></a>
+    <a href="#ch7"><i>07 / 42:40</i><span>供应链与治理<small>7.1% 泄漏率、提示注入、以及「只依赖三个最稳端点」</small></span></a>
+    <a href="#closing"><i>END / 50:00</i><span>结语：能力要能离开你<small>三条可以搬走的做法，和这篇文没解决的问题</small></span></a>
+  </nav>
+</div>
+
+<main>
+<section class="chapter" id="ch1">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>01</b></div>
+    <div class="ch-title">
+      <h2>提示词不是能力</h2>
+      <p>「我会用」和「任何人装了就能用」之间，隔着分发、契约与审计三件事。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">在打包之前，我的生图能力长这样：一段写在系统提示里的中文流程——「先 GET /api/health 探活，失败提示用户跑 start.bat；POST /api/generations 提交，轮询 GET /api/generations/{id} 到 completed；把本地图片路径交回用户」。加上我脑子里的默认值：尺寸 1024x1024、数量 1、超时五分钟。</p>
+    <p>这套东西对我有效，因为整个环境都在我脑子里：端口是 4173、画境没启动长什么样、渠道列表怎么读、失败该重试还是换渠道。但对另一个 Agent 来说，它是零——它没有我的记忆，没有我的默认值，也没有我踩过的坑。</p>
+    <p>把这套流程和打包后的技能并排放，差别立刻显形：</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th></th><th>系统提示里的流程</th><th>打包后的技能</th></tr></thead>
+        <tbody>
+          <tr><td><b>分发</b></td><td>复制粘贴提示词，每次升级靠人肉同步</td><td class="num">clawhub install</td><br/>一行命令，版本随包走</td></tr>
+          <tr><td><b>契约</b></td><td>「大概这样做」——没有定义失败长什么样</td><td class="num">4 个退出码</td><br/>0 成功 / 1 生成失败 / 2 不可达 / 3 用法错误</td></tr>
+          <tr><td><b>审计</b></td><td>出了错不知道是流程哪句被理解偏了</td><td class="num">JSON on stdout</td><br/>stderr 只走诊断，包体无秘密</td></tr>
+          <tr><td><b>触发</b></td><td>永远在我的会话里挂着</td><td class="num">description 驱动</td><br/>别人家 Agent 判断什么时候该用它</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>这四行里最容易被低估的是<strong>契约</strong>。提示词版本的流程没有定义「失败」：画境没启动算什么？渠道报错算什么？超时算什么？我自己知道，脚本不知道。打包成技能的第一步不是写文档，是<strong>把失败模式枚举出来并编码</strong>——这就是那四个退出码的由来，第 4 章展开。</p>
+
+    <h3>一个技能的最小形态</h3>
+    <p>ClawHub 的技能格式是目录制：<code>&lt;slug&gt;/SKILL.md</code> 加附属文件，最小技能只需要 frontmatter 里的 <code>name</code> 和 <code>description</code>。也就是说，一个纯 Markdown 的「怎么做 X」说明，只要描述写得好，就能发布、被搜索、被安装。</p>
+    <p>但纯文本技能有个天花板：它只能<strong>建议</strong> Agent 做什么，不能<strong>保证</strong> Agent 做对。生图这种带轮询、带超时、带错误分类的流程，写成散文留给模型自由发挥，每次执行都是一次重新发明。所以 <code>huajing-image-gen</code> 选了目录制的完整形态：</p>
+    <div class="code">
+      <div class="code-bar"><b>huajing-image-gen/</b><span>2 个文件 · 319 行</span></div>
+<pre>huajing-image-gen/
+├── SKILL.md            <span class="c"># 80 行：frontmatter + Setup + Usage + Notes</span>
+└── scripts/
+    └── huajing.mjs      <span class="c"># 239 行：Node 18+ 零依赖，4 个子命令</span>
+
+<span class="c"># 脚本只依赖画境的三个最稳定端点：</span>
+<span class="c">#   GET  /api/health          探活</span>
+<span class="c">#   POST /api/generations     提交生成</span>
+<span class="c">#   GET  /api/generations/{id} 轮询结果</span></pre>
+    </div>
+    <p><strong>80 行文档 + 239 行脚本</strong>——这个比例值得记住。文档只负责三件事：让机器决定什么时候用（description）、让 Agent 知道怎么调（Usage）、出错时怎么办（Notes）。真正的逻辑全在脚本里，因为散文写的轮询逻辑，模型每次执行都会变体，而脚本每次执行都一样。</p>
+    <div class="pull">技能的本质，是<strong>把「我会」翻译成「任何人装了就能会」</strong>。翻译过程中丢掉的每一个默认值，都会在别人家变成一次失败。</div>
+    <p>下一篇从最贵的那个部件开始：SKILL.md 的 description——机器读它来决定要不要用你的技能，五十个词写错一个场景，技能就永远不会被触发。</p>
+  </div>
+</section>
+
+<section class="chapter" id="ch2">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>02</b></div>
+    <div class="ch-title">
+      <h2>解剖一个 SKILL.md</h2>
+      <p>80 行文档拆成六个部件，每一个都对应一种确定的失败方式。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">把 <code>huajing-image-gen/SKILL.md</code> 从头到尾读一遍，它只有四个段落：frontmatter、Setup、Usage、Notes。80 行里没有一个修饰词。这不是文风，是结构——每个段落都在回答一个不同主体的问题：<strong>frontmatter 回答「机器」，Setup 回答「安装者」，Usage 回答「执行时的 Agent」，Notes 回答「出错的 Agent」。</strong></p>
+    <div class="code">
+      <div class="code-bar"><b>SKILL.md</b><span>80 行 · 六个部件</span></div>
+<pre><span class="k">---</span>
+<span class="f">name:</span> huajing-image-gen
+<span class="f">description:</span> &gt;-
+  Generate images through a local Huajing (AI Image Studio) server. Use when
+  the user asks to create or generate an image, polish an image prompt, or
+  look up previously generated images. Supports text-to-image with polling,
+  batch count, size, negative prompt, and provider/model selection. Requires
+  the local Huajing server (default http://127.0.0.1:4173) and Node 18+.
+<span class="f">metadata:</span>
+  <span class="f">openclaw:</span>
+    <span class="f">requires:</span>
+      <span class="f">bins:</span> [node]
+<span class="k">---</span>
+
+<span class="c"># Huajing Image Generation        ← 一句话定位 + 链接</span>
+<span class="c">## Setup                          ← 安装者要做的三步（启动服务/加渠道/环境变量）</span>
+<span class="c">## Usage                          ← Agent 执行时抄的命令，含全部参数与退出码</span>
+<span class="c">## Notes                          ← 三种失败的处理指引（exit 2 / exit 1 / 画廊复用）</span></pre>
+    </div>
+
+    <h3>部件一：name 与 slug 的同一性</h3>
+    <p>frontmatter 里的 <code>name: huajing-image-gen</code> 看似只是个名字，但发布时有个容易踩的坑：<strong>ClawHub 取的 slug 是文件夹名，不是 frontmatter 的 name</strong>。如果文件夹叫 <code>huajing-skill</code> 而 name 写 <code>huajing-image-gen</code>，发布出来的技能 slug 是前者，所有 <code>install @owner/huajing-image-gen</code> 都会失败。发布流水线里这叫「slug 对齐」——文件夹名必须等于 slug，name 与 slug 保持一致是纪律，不是巧合。</p>
+
+    <h3>部件二：description 的三句话结构</h3>
+    <p>这段 description 有 62 个词，三句话各司其职：<strong>第一句说能力</strong>（Generate images through a local Huajing server）；<strong>第二句说触发场景</strong>（Use when the user asks to create or generate an image, polish an image prompt, or look up previously generated images）；<strong>第三句说前置条件</strong>（Requires the local server and Node 18+）。这个「能力—触发—前提」的三段式不是模板腔，是机器解析的格式——第 3 章会逐词拆。</p>
+
+    <h3>部件三：requires 声明依赖</h3>
+    <p><code>metadata.openclaw.requires.bins: [node]</code> 声明这个技能需要 <code>node</code> 可执行文件。声明依赖有两个作用：市场页会把 <code>requires</code> 明示给安装者（不静默满足）；消费方可以在安装时检查本机有没有 <code>node</code>，没有就把技能标灰，而不是装完在运行时报错。环境变量同理——<code>HUAJING_BASE_URL</code> 在 Setup 里写成「可选覆盖，默认 127.0.0.1:4173」，而不是藏在脚本第 8 行。</p>
+
+    <figure class="fig">
+      <div class="frame"><img src="assets/art/scroll.webp" alt="纸鹤从一只打开的小木箱里抽出一卷长长的空白说明纸，旁边散着几个小零件和一本折起的手册" width="1280" height="768"/></div>
+      <figcaption><b>FIG. 01</b>SKILL.md 是随箱说明书：机器读 frontmatter 决定触发，Agent 读 Usage 学会调用，出错时读 Notes。</figcaption>
+    </figure>
+
+    <h3>部件四：{baseDir} 占位符</h3>
+    <p>Usage 里所有命令都写成 <code>node {baseDir}/scripts/huajing.mjs …</code>。<code>{baseDir}</code> 是技能安装后由运行时替换的占位符——因为技能被安装在用户机器的哪个路径，写文档的人不知道。硬编码相对路径 <code>scripts/huajing.mjs</code> 在技能目录内能跑，一旦 Agent 的工作目录不是技能目录就会 404。这是「可迁移」检查项的来源：文档里出现的一切路径，要么是占位符，要么是协议相对路径（如 <code>/api/health</code>），不能是安装位置。</p>
+
+    <h3>部件五：退出码即契约</h3>
+    <p>Usage 段最显眼的一行是：<code>Exit codes: 0 success, 1 generation failed, 2 server unreachable, 3 bad usage</code>。四个数字把失败分成三类，Agent 据此决定下一步：</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>退出码</th><th>含义</th><th>Agent 应该做什么</th></tr></thead>
+        <tbody>
+          <tr><td class="num">0</td><td>成功</td><td>读取 JSON 里的图片路径/URL，交回用户</td></tr>
+          <tr><td class="num">1</td><td>生成失败</td><td>读 JSON 的 <code>error</code> 字段（上游原话），考虑换 <code>--provider</code> 重试</td></tr>
+          <tr><td class="num">2</td><td>服务不可达</td><td>不重试——转告用户「启动画境（start.bat / npm start）」</td></tr>
+          <tr><td class="num">3</td><td>用法错误</td><td>参数拼错了，读 stderr 里的 Usage 重来</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>没有退出码契约时，Agent 对失败只有两种反应：盲目重试，或者把报错堆栈原样甩给用户。2 号退出码的设计意图是<strong>让重试在「不可达」这一类失败上停止</strong>——重试一个没启动的服务，五次和零次没有区别。</p>
+
+    <h3>部件六：Notes 是「错误的处理指引」</h3>
+    <p>Notes 段只有三条，每条都对应一种真实发生过的失败：exit 2 → 转告用户启动服务；exit 1 → 上游错误原文在 JSON 里，换渠道通常有效；生成过的图都在画廊里，可以 <code>gallery</code> 查回，不必重新生成。第三条是给 Agent 的<strong>资源复用提示</strong>——没有它，Agent 在图片失败重试时会倾向于重新生成，浪费一次渠道调用。</p>
+    <p>下面这枚小样把六个部件做成开关。关掉任何一个，右边的五项检查会立刻告诉你哪种能力消失——以及实际后果。</p>
+  </div>
+
+  <div class="demo" id="demo-anat">
+    <div class="demo-head">
+      <span class="demo-tag">DEMO 01</span>
+      <span class="demo-title">SKILL.md 解剖台 <span class="hint">关掉一个部件，看哪种能力消失</span></span>
+    </div>
+    <div class="demo-body">
+      <div class="anat">
+        <div class="anat-file" id="anat-file"></div>
+        <div class="anat-side">
+          <div class="anat-score"><span id="anat-num">5</span><small> / 5 项检查通过</small></div>
+          <div id="anat-checks"></div>
+          <div class="anat-warn" id="anat-warn"></div>
+          <p class="hintline" style="margin-top:10px">五项检查：可触发（description 完整）/ 可执行（命令与依赖齐）/ 可恢复（退出码与失败指引）/ 可迁移（{baseDir} 占位）/ 无秘密（包内无密钥）。</p>
+        </div>
+      </div>
+      <div class="controls" style="border-top:1px solid var(--line-soft);margin-top:14px;padding-top:12px;border-bottom:0">
+        <div class="ctl" style="flex:1 1 100%">
+          <label>一键预设</label>
+          <div class="seg" id="anat-presets">
+            <button data-p="all" aria-pressed="true">完整技能</button>
+            <button data-p="nodesc" aria-pressed="false">删 description</button>
+            <button data-p="noexit" aria-pressed="false">删退出码行</button>
+            <button data-p="nobase" aria-pressed="false">硬编码路径</button>
+            <button data-p="noscript" aria-pressed="false">只发文档不发脚本</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="demo-foot"><b>模型</b> 部件与后果映射自真实的 huajing-image-gen/SKILL.md（80 行）与发布验收清单；「检查」是本演示的判定函数，与 ClawHub 的 inspect/scan 不是一回事。</div>
+  </div>
+</section>
+
+<section class="chapter" id="ch3">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>03</b></div>
+    <div class="ch-title">
+      <h2>最贵的五十个词</h2>
+      <p>description 是技能唯一的广告位：机器读它决定触发，写宽了误触发，写窄了永不被用。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">一个技能装进别人家后，用户不会读你的 Usage——用户只说「帮我生成一张图」。是 Agent 在几十个已装技能里挑一个，挑的依据只有一个：<strong>每条技能的 description</strong>。这五十来个词是技能唯一的广告位，也是最容易被写成废话的五十个词。</p>
+    <p>把 <code>huajing-image-gen</code> 的 description 逐句拆开，看每个短语在买什么：</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>短语</th><th>它买到什么</th><th>删掉的后果</th></tr></thead>
+        <tbody>
+          <tr><td><b>Generate images through a local Huajing server</b></td><td>能力主语与边界：本地服务，不是云端 API</td><td>用户问「用 DALL·E 画图」时可能误触发</td></tr>
+          <tr><td><b>Use when the user asks to create or generate an image</b></td><td>核心触发：生成图片</td><td>最典型的请求无法命中，技能永不被用</td></tr>
+          <tr><td><b>polish an image prompt</b></td><td>次级触发：润色提示词</td><td><code>polish</code> 子命令永远闲置</td></tr>
+          <tr><td><b>look up previously generated images</b></td><td>次级触发：画廊检索</td><td>「上次那张图」类请求漏掉，重生成浪费渠道调用</td></tr>
+          <tr><td><b>Supports text-to-image with polling, batch, size, negative prompt…</b></td><td>能力边界：会轮询、可批量、支持负向词</td><td>Agent 不知道脚本会阻塞到完成，自己另写轮询</td></tr>
+          <tr><td><b>Requires the local server and Node 18+</b></td><td>前置条件：没装画境的机器不该选它</td><td>在没有服务的机器上被选中，然后 exit 2</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>三句话的结构由此而来：<strong>第一句立边界，第二句列触发，第三句交前提。</strong>Triggering 不是搜索匹配，是让另一个模型在「工具不足时判断该用什么」——它读的是语义，不是关键词。所以 description 里放「强大的」「下一代」这类形容词毫无用处，放「look up previously generated images」这种具体场景短语才有用。</p>
+
+    <h3>写宽与写窄</h3>
+    <p>description 有两种典型写坏法。<strong>写宽</strong>：把描述写成「图像生成工具」——于是用户问「帮我裁剪这张图」「这张图什么风格」时它也被选中，然后脚本 exit 3。误触发的代价不只是浪费一次调用：Agent 可能放弃原本正确的方案。<strong>写窄</strong>：把描述写成「用画境 HTTP API 生图」——只有用户明确提出「画境」才触发，而用户永远不知道画境是什么。</p>
+    <p>安全的写法是<strong>枚举触发场景，而不是枚举实现</strong>：写「generate an image」而不是「调用 /api/generations」，写「look up previously generated images」而不是「查询 gallery 表」。判断标准很简单：想象用户的原话，你的 description 里得有与之语义重合的短语。</p>
+    <div class="formula">
+      <div class="eq">触发可靠度 ≈ 场景短语与用户原话的语义重合度 &minus; 泛化词带来的误触发</div>
+      <small>Use when + 具体动词短语 · 能力边界（local/云端）· 前置条件（requires）</small>
+      <p class="why">这条「公式」没法精确计算——触发是另一个模型的行为。但它指出了调优方向：拿十条用户可能说的话，逐条检查 description 能否接住；再拿五条不该接的话，检查会不会被误接。这个 15 条的清单就是 description 的测试集。</p>
+    </div>
+
+    <h3>还有三个不是 description 的触发面</h3>
+    <ul>
+      <li><strong>name</strong>：用户说「用 huajing 生成」时按名字命中。所以 name 要含品牌词，同时保持 slug 一致。</li>
+      <li><strong>requires</strong>：前置条件不满足时，消费方应在选择阶段就把技能标灰——这比「触发后失败」的体验好一个量级。</li>
+      <li><strong>Notes 里的负向指引</strong>：「If generate exits 2, the server is not running」这类句子也在参与触发决策：Agent 读到它，就知道失败不是技能的错，不必换技能。</li>
+    </ul>
+    <div class="note"><b>一个还没做的改进：</b>描述调优目前靠人工想象用户的话。更好的做法是在自己家先积累「触发日志」——哪句话选中了技能、哪句话该选中却没选中——攒够二十条就是 description 的回归测试集。这与 VOL.06 里「评测集会腐烂」是同一个道理：触发描述也需要测试集，也会腐烂。</div>
+    <p>下面这枚小样模拟一次触发决策。输入一句用户原话，看六条技能如何按语义重合度竞争，再切换「泛化描述」开关，观察误触发怎么发生。</p>
+  </div>
+
+  <div class="demo" id="demo-trigger">
+    <div class="demo-head">
+      <span class="demo-tag">DEMO 02</span>
+      <span class="demo-title">触发实验台 <span class="hint">一句用户原话，六条技能竞争</span></span>
+    </div>
+    <div class="demo-body">
+      <div class="controls">
+        <div class="ctl" style="flex:2 1 260px">
+          <label for="trig-q">用户说</label>
+          <input id="trig-q" type="text" value="帮我生成一张图：一只纸鹤在木桌上" spellcheck="false"/>
+        </div>
+        <div class="ctl" style="flex:0 0 auto">
+          <label>预设原话</label>
+          <div class="seg" id="trig-presets">
+            <button data-q="帮我生成一张图：一只纸鹤在木桌上" aria-pressed="true">生成图片</button>
+            <button data-q="把刚才那张图的提示词润色一下" aria-pressed="false">润色提示词</button>
+            <button data-q="找一下上次生成的那张海报" aria-pressed="false">画廊检索</button>
+            <button data-q="帮我裁剪这张图片并调色" aria-pressed="false">不该触发</button>
+          </div>
+        </div>
+        <label class="switch"><input id="trig-broad" type="checkbox"/>把画境的描述改成泛化版「图像处理工具」</label>
+      </div>
+      <div class="trig-grid">
+        <div class="trig-rows" id="trig-rows"></div>
+        <div class="trig-side">
+          <div class="row"><span>命中技能</span><b id="trig-hit">—</b></div>
+          <div class="row"><span>命中分</span><b id="trig-score">—</b></div>
+          <div class="row"><span>触发阈值</span><b>0.30</b></div>
+          <div class="verdict" id="trig-verdict"></div>
+        </div>
+      </div>
+    </div>
+    <div class="demo-foot"><b>模型</b> 打分 = 词元重合（query∩desc / query，Jaccard 混合）+ 触发动词奖励（generate/create/look up/polish 等与原话动词命中各 +0.15），阈值 0.30。六条技能的描述里，huajing-image-gen 是原版英译回填，其余五条为演示构造。</div>
+  </div>
+</section>
+
+<section class="chapter" id="ch4">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>04</b></div>
+    <div class="ch-title">
+      <h2>零依赖脚本</h2>
+      <p>239 行、四个退出码、JSON 走 stdout——把「会失败」写进接口，而不是留给运气。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">技能脚本的运行环境和常规工程完全不同：它跑在<strong>别人家的机器</strong>上，路径未知、包管理器未知、网络未知。所以第一条设计决策是<strong>零依赖</strong>——<code>huajing.mjs</code> 只 import <code>node:process</code>，HTTP 用 Node 18 内置的 <code>fetch</code>，JSON 解析用内置的 <code>JSON</code>。没有 <code>npm install</code>，没有 node_modules，没有版本解析。安装即解压，解压即能跑。</p>
+    <p>这不是洁癖。一个技能如果要求 <code>pip install -r requirements.txt</code> 或 <code>npm i</code>，它的安装成功率就取决于用户机器的网络、Python 版本、npm 镜像源——每一项都是一次远程失败的入口。零依赖把「安装」收敛成「复制文件」，把失败的入口从安装期推迟到运行期，而运行期的失败是可以被退出码契约管理的。</p>
+
+    <h3>失败分三类，退出码只发三种</h3>
+    <p>脚本开头定义了四个常量，整个 239 行里所有失败路径都收敛到它们：</p>
+    <div class="code">
+      <div class="code-bar"><b>scripts/huajing.mjs</b><span>第 10–13 行</span></div>
+<pre><span class="k">const</span> EXIT_OK          = <span class="n">0</span>;   <span class="c">// 成功，JSON 已写到 stdout</span>
+<span class="k">const</span> EXIT_FAILED     = <span class="n">1</span>;   <span class="c">// 生成失败：上游错误原文在 JSON error 字段</span>
+<span class="k">const</span> EXIT_UNREACHABLE = <span class="n">2</span>;   <span class="c">// 画境不可达：不要重试，去启动服务</span>
+<span class="k">const</span> EXIT_USAGE      = <span class="n">3</span>;   <span class="c">// 用法错误：读 stderr 里的 Usage</span></pre>
+    </div>
+    <p>为什么是这四个？因为它们对应 Agent 的四种不同<strong>下一步</strong>。重试策略完全不同的失败，必须用不同的出口：网络抖动（HTTP 5xx）值得重试，服务没启动不值得；参数拼错重试一百次也是 3。反过来，凡是「下一步相同」的失败都合并成一个码——404 和参数错都归 3，因为对 Agent 来说它们都意味着「检查你怎么调的」。</p>
+
+    <h3>stdout 与 stderr 的分工</h3>
+    <p>脚本的全部机器可读输出走 <code>stdout</code>，且是合法 JSON；全部人读诊断走 <code>stderr</code>——「huajing: queued 1 task(s) on provider …」「huajing: status generating, waiting...」。这条分工不是风格，是<strong>管道契约</strong>：Agent 可以放心 <code>JSON.parse(stdout)</code>，也可以把 stderr 展示给用户而不污染解析。轮询等待写进 stderr，就是为了「界面有动静、结果可解析」两全。</p>
+    <p>外加一个 <code>--plain</code> 开关：输出人类可读的路径列表而不是 JSON。它服务的是人直接在终端调试的场景——Agent 用 JSON，人用 plain，两不耽误。</p>
+
+    <h3>可执行的修复提示，而不是报错堆栈</h3>
+    <p>画境不可达时，脚本不是抛 <code>ECONNREFUSED</code> 堆栈，而是：</p>
+    <div class="code">
+      <div class="code-bar"><b>scripts/huajing.mjs</b><span>request() 的 catch 分支</span></div>
+<pre><span class="f">fail</span>(EXIT_UNREACHABLE,
+  <span class="s">`cannot reach Huajing at ${BASE_URL} (${error.cause?.code || error.message}). `</span> +
+  <span class="s">'Start it with start.bat (Windows) or `npm start` in the Huajing repo.'</span>);</pre>
+    </div>
+    <p>这句话是发布验收清单里的一条：<strong>服务未启动时给出可执行的修复提示（而非报错堆栈）</strong>。它包含三个信息：打的是哪个地址（所以 BASE_URL 被拼进消息）、失败的技术原因（cause code）、以及下一步动作（start.bat / npm start）。Agent 拿到它可以直接转述给用户——这就是「错误信息是产品文案」在技能层的样子。</p>
+
+    <h3>轮询：截止时间与「不撤回」的诚实</h3>
+    <p>生图是异步任务：提交后轮询 <code>GET /api/generations/{id}</code>，退避间隔 1s/2s/3s 封顶。轮询有一个 <code>--timeout</code>（默认 300 秒）的截止线，超时的处理值得抄下来：</p>
+    <div class="code">
+      <div class="code-bar"><b>scripts/huajing.mjs</b><span>pollGeneration</span></div>
+<pre><span class="k">if</span> (Date.now() &gt; deadline) {
+  <span class="f">fail</span>(EXIT_FAILED, <span class="s">`timed out after ${timeoutSeconds}s; the task may still finish — `</span> +
+    <span class="s">`check the gallery later (record id: ${id})`</span>);
+}</pre>
+    </div>
+    <p>注意这句文案：<strong>任务可能仍然会完成</strong>。生图任务在服务端继续跑，超时只是客户端放弃等待，不是任务失败。把 record id 留在错误消息里，用户拿着它可以去画廊把图找回来——「重试」反而会浪费渠道调用。错误消息里写清「放弃了什么、留下了什么」，Agent 才能做出正确的下一步。</p>
+    <div class="note"><b>密钥去哪了：</b>包里没有也不该有 API key。画境的渠道密钥存在画境服务自己的配置里，技能只对本机 127.0.0.1 说话。这让「装技能」和「配密钥」成为两个独立动作——第 7 章会看到，这个分离正是 7.1% 泄漏率的反面。</div>
+    <p>脚本就绪之后是发布。下一篇走一遍从 <code>clawhub login</code> 到线上可装的完整流水线，以及那条最容易被坑的 slug 规则。</p>
+  </div>
+
+  <figure class="fig">
+    <div class="frame"><img src="assets/art/clockwork.webp" alt="纸鹤在工作台上组装一个完全自包含的钟表机芯，齿轮与发条合拢，没有任何导线连出装置" width="1280" height="768"/></div>
+    <figcaption><b>FIG. 02</b>零依赖：整个装置自包含，没有一根线连到外面——安装即解压，解压即能跑。</figcaption>
+  </figure>
+</section>
+
+<section class="chapter" id="ch5">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>05</b></div>
+    <div class="ch-title">
+      <h2>发布流水线</h2>
+      <p>从 <code>clawhub login</code> 到另一台机器能装能跑：五步、一条 slug 规则、一次 ≈60 秒的安全扫描。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">发布这五步，官方文档十分钟就能读完。真正费时间的是第五步——<strong>验收</strong>——以及一个藏在第一步里的命名陷阱。先走流程：</p>
+    <div class="code">
+      <div class="code-bar"><b>发布命令序列</b><span>v1.0.0 实录</span></div>
+<pre><span class="c"># 1. 账号：GitHub 设备流授权（token 落在本机配置）</span>
+npm i -g clawhub
+clawhub login --device
+
+<span class="c"># 2. 本地校验 frontmatter</span>
+clawhub inspect huajing-image-gen/
+
+<span class="c"># 3. 发布（文件夹名 = slug）</span>
+clawhub skill publish huajing-image-gen/   <span class="c"># 附 changelog v1.0.0</span>
+<span class="c"># ≈60s 安全扫描后才公开 —— 验收时别把这段延迟当成失败</span>
+
+<span class="c"># 4. 闭环：在另一台机器 / WSL 里安装并真实调用</span>
+clawhub install @starrysea1412/huajing-image-gen
+node …/scripts/huajing.mjs health &amp;&amp; … generate --prompt <span class="s">"…"</span></pre>
+    </div>
+
+    <h3>slug 就是文件夹名</h3>
+    <p>发布后技能的 URL 是 <code>clawhub.ai/&lt;owner&gt;/skills/&lt;slug&gt;</code>，而 <strong>slug 取自文件夹名，不是 frontmatter 的 name</strong>。这意味着三件事：文件夹命名要从发布视角起（kebab-case、含能力词）；<code>name</code> 与文件夹名保持一致，避免「装的是 A、文档说自己是 B」；如果非要不同名，CLI 的发布参数可以覆盖 slug——但覆盖是例外，对齐是默认。这次发布里，目录名直接定为 <code>huajing-image-gen</code>，与 name 一字不差。</p>
+
+    <h3>安全扫描是异步的</h3>
+    <p>publish 返回成功 ≠ 技能已公开：ClawHub 会对包体跑一次官方安全扫描，<strong>约 60 秒后</strong>技能才出现在搜索与安装列表里。这次发布时，publish 后立刻去搜，搜不到——差点当成失败重发。事后知道这是正常流程，任何自动化发布脚本都应该把「扫描等待」设计进去：轮询 <code>/skills/{slug}</code> 直到 200，或者干脆 sleep 一分钟再验收。</p>
+    <p>扫描结果本身也是公开资产：<code>GET /api/v1/skills/{slug}/scan</code> 返回官方扫描结论。消费方（第 6 章的技能市场）会把它直接展示在安装页——发布者应该主动看一眼自己技能的扫描报告，别让第一个发现问题的不是我。</p>
+
+    <h3>读接口是公共设施，写接口才要 token</h3>
+    <p>ClawHub 的 API 边界划得很清楚：<strong>读全部免 token</strong>（search / skills / versions / scan / download，限流 3000/min/IP），<strong>写需要 <code>clh_</code> token</strong>（multipart 发布、下架、更名，限流 300/min/IP）。OpenAPI 规范在 <code>/api/v1/openapi.json</code>，官方明确欢迎第三方目录复用读接口——条件是缓存结果、尊重 429 的 <code>Retry-After</code>、展示处回链技能页。</p>
+    <p>这三条合规义务值得照抄，因为它们是「把公共 API 当公共设施」的最小礼仪：缓存意味着不把自己的流量转嫁给对方；尊重退避意味着限流是合作信号而不是敌意；回链意味着流量有出处。</p>
+
+    <h3>验收清单：发布不算完，闭环才算完</h3>
+    <ul>
+      <li><strong>可搜索</strong>：等扫描过后在 ClawHub 搜 <code>huajing</code>，技能出现；</li>
+      <li><strong>可安装</strong>：在另一台机器 / WSL 里 <code>clawhub install</code>，文件落在本地技能目录；</li>
+      <li><strong>可调用</strong>：<code>health</code> 通、真实 <code>generate</code> 出图；</li>
+      <li><strong>失败时给指引</strong>：故意不启动画境再调一次，确认拿到的是「启动服务」提示而不是堆栈；</li>
+      <li><strong>版本链路</strong>：改一处 description，重新 publish 出 v1.0.1，确认更新可被拉到。</li>
+    </ul>
+    <p>最后一条常被跳过，但它验证的是<strong>更新通道</strong>：v1.0.0 发布成功只证明创建，不证明「下次改完还能推上去」。发布系统的bug往往藏在第二次发布里。</p>
+    <div class="note"><b>自动化路线：</b>CLI 之外，网页创建 <code>clh_</code> token 后可以直接 <code>POST /api/v1/skills</code>（multipart：payload JSON + files[]）。技能源码放进主仓库子目录（<code>ai-image-studio/clawhub-skill/</code>），随主版本走——CI 化时一条流水线同时出服务版本和技能版本，避免两处维护漂移。</div>
+    <figure class="fig">
+      <div class="frame"><img src="assets/art/stamp.webp" alt="纸鹤站在发货柜台前，用一枚大圆橡皮章在木箱上盖出砖红的环形印记，传送带上还有两只木箱" width="1280" height="768"/></div>
+      <figcaption><b>FIG. 03</b>发布不是终点：盖章之后还有 ≈60 秒的扫描队列，验收从另一台机器开始。</figcaption>
+    </figure>
+
+    <p>下面这枚小样把发布与安装验收做成可操作的状态机：每一步都可以注入失败，看流水线如何停、回滚到哪、提示写什么。</p>
+  </div>
+
+  <div class="demo" id="demo-pipe">
+    <div class="demo-head">
+      <span class="demo-tag">DEMO 03</span>
+      <span class="demo-title">安装验收流水线 <span class="hint">注入失败，看它停在哪、怎么说</span></span>
+    </div>
+    <div class="demo-body">
+      <div class="controls">
+        <div class="ctl" style="flex:0 0 auto">
+          <label>故障注入</label>
+          <div class="seg" id="pipe-faults">
+            <button data-f="none" aria-pressed="true">无故障</button>
+            <button data-f="slug" aria-pressed="false">slug 不一致</button>
+            <button data-f="scan" aria-pressed="false">扫描未过</button>
+            <button data-f="health" aria-pressed="false">服务未启动</button>
+            <button data-f="noapprove" aria-pressed="false">脚本未审批</button>
+          </div>
+        </div>
+        <label class="switch"><input id="pipe-wait" type="checkbox" checked/>发布后等待 ≈60s 安全扫描</label>
+      </div>
+      <div class="pipe" id="pipe"></div>
+      <div class="pipe-out">
+        <span class="v stop" id="pipe-v">STOP</span>
+        <span class="w" id="pipe-w">选一个故障注入，或直接看无故障路径。</span>
+      </div>
+    </div>
+    <div class="demo-foot"><b>模型</b> 六步状态机与提示文案对应真实流程：publish → 扫描等待 → install（slug=文件夹名）→ 落盘技能目录 → health 探活 → 启用确认。脚本型技能默认停用，启用即审批——第 6 章展开。</div>
+  </div>
+</section>
+
+<section class="chapter" id="ch6">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>06</b></div>
+    <div class="ch-title">
+      <h2>装到别人家</h2>
+      <p>安装 ≠ 启用。text-only 与 script-bearing 分级治理，是消费方的纪律，也是发布方的设计前提。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">发布只是技能的出厂。技能真正被使用，是在另一个 Agent 体系里走完「搜索 → 安装 → 转换 → 启用 → 调用 → 卸载」的完整生命周期。这套流程的每一步都有治理决策，而决策的分界线只有一条：<strong>这个技能带不带可执行脚本。</strong></p>
+    <p>我在 AI-skill（自己的 Hermes 工作台）里规划消费方市场时，把这条线画成了硬分级：</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>分级</th><th>判定</th><th>装完之后</th><th>调用时</th></tr></thead>
+        <tbody>
+          <tr><td><b>text-only</b></td><td>SKILL.md 不引用 <code>{baseDir}</code> 下的脚本、不声明 bins</td><td>转换后即可用（仍受模板工具白名单约束）</td><td>不额外审批</td></tr>
+          <tr><td><b>script-bearing</b></td><td>正文引用 <code>{baseDir}</code> 脚本，或 <code>requires.bins</code> 非空</td><td><strong>默认停用</strong>，启用需人工确认；缺 bins 的在列表里标灰</td><td>每次执行走受控审批</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><code>huajing-image-gen</code> 是典型的 script-bearing：声明了 <code>bins: [node]</code>，正文里有 <code>{baseDir}/scripts/huajing.mjs</code>。装进 AI-skill 这样的消费方时，它的预期生命周期是：安装成功但状态「需审批」→ 用户看过 <code>requires</code>（node + 本机画境服务）后启用 → 每次 Agent 真要跑脚本时弹审批。审批不是形式：它把「外来代码在我机器上执行」这个决定，从安装时的顺手一点，推迟到每次实际发生的时刻。</p>
+
+    <h3>转换：目录制到扁平制的有损边界</h3>
+    <p>消费方体系若是扁平 Markdown 注入（技能文本拼进 system prompt），目录制技能就要过一道转换器。转换规则里最有意思的是<strong>分级判定</strong>：</p>
+    <ul>
+      <li>frontmatter 的 <code>name / description</code> 直取——它们本来就是给机器读的；</li>
+      <li><code>version</code> 取 <code>metadata.openclaw.version</code>，缺失则回落到 lock 文件；</li>
+      <li><code>tags</code> 补 <code>[clawhub, &lt;owner&gt;]</code>——来源必须跟着技能走，审计时能追到发布者；</li>
+      <li>正文原样保留，但 script-bearing 技能转换成「工具说明」文本，显式标注所需 bins/env，执行指令改为「走审批调脚本」。</li>
+    </ul>
+    <p>这条有损边界是刻意设计的：<strong>文本注入的世界里，脚本不该被「描述」，而该被「申请」。</strong>把 <code>node {baseDir}/scripts/huajing.mjs generate …</code> 写进 system prompt，等于告诉模型「你可以随手执行任何命令」；转换成审批式的工具说明，等于把执行权收回到人手里。</p>
+
+    <h3>市场页的三条信息义务</h3>
+    <p>消费方展示技能卡片时，有三样东西必须明示，不能藏在「详情」里：</p>
+    <ul>
+      <li><strong>requires</strong>：需要 node 18+、需要本机画境服务——让安装者在装之前就知道这个技能能不能在自己家跑起来；</li>
+      <li><strong>scan</strong>：ClawHub 官方安全扫描结果直接展示，不重扫、不转述；</li>
+      <li><strong>回链</strong>：<code>clawhub.ai/&lt;owner&gt;/skills/&lt;slug&gt;</code>——出处可点，作者可查，版本可追。</li>
+    </ul>
+    <p>外加一条降级纪律：ClawHub 不可达时，市场 tab 整体隐藏，工作台其余功能零影响。市场是增强，不是依赖。</p>
+
+    <h3>卸载与更新的闭环</h3>
+    <p>卸载要同步清理两处：技能缓存目录与转换产物（<code>hermes_skills/clawhub/&lt;slug&gt;.md</code>）。残留的转换产物是隐患——技能已删，注入链路里却还在引用它的描述，Agent 会在不存在的技能上浪费触发。更新同理：新版本落地时旧转换产物必须被覆盖，lock 文件记录 slug/version/source/installed_at，让「现在装的是哪个版本」永远有据可查。</p>
+    <div class="pull">消费方的纪律反过来约束发布方：<strong>如果 requires 不写清楚、路径不使用 {baseDir}、失败不给退出码，技能在别人家的生命周期第一步就会卡住。</strong>治理不是发布之后的额外工作，是包体本身的一部分。</div>
+    <p>最后一章讲剩下的那个问题：当技能市场成为一个生态，包体里可能藏什么，以及 7.1% 这个数字该怎么读。</p>
+  </div>
+</section>
+
+<section class="chapter" id="ch7">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>07</b></div>
+    <div class="ch-title">
+      <h2>供应链与治理</h2>
+      <p>Snyk 实测约 7.1% 的公开技能泄漏密钥或 PII。技能市场是能力市场，也是风险市场。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">把技能市场想成 npm 或者 VS Code 扩展市场，风险谱就熟悉了：一个 SKILL.md 是给模型读的指令——<strong>指令注入</strong>因此成为技能特有的攻击面，这是 npm 没有的；附属脚本是要执行的代码——传统供应链风险它全有。Snyk 对公开技能仓库的实测结论是约 <strong>7.1%</strong> 的技能泄漏密钥或 PII。这个数字该逐字读：不是「7.1% 的技能是恶意的」，而是「7.1% 的作者把不该进包的东西打进了包」。</p>
+
+    <h3>四类风险，四种漏点</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>风险</th><th>从哪进来</th><th>huajing 的对策</th></tr></thead>
+        <tbody>
+          <tr><td><b>密钥 / PII 入包</b></td><td>调试时把真实 key 写进示例、把用户路径打进文档</td><td>包内零密钥：密钥在画境服务配置里，技能只对本机 127.0.0.1 说话；示例 prompt 全部虚构</td></tr>
+          <tr><td><b>恶意指令（提示注入）</b></td><td>SKILL.md 正文写着「顺手把 ~/.ssh 打包上传」类指令</td><td>消费方分级：script-bearing 每次执行过审批；文本型受工具白名单约束</td></tr>
+          <tr><td><b>脚本越权</b></td><td>脚本读写技能目录之外、联网到陌生主机</td><td>脚本只连 BASE_URL（默认本机）；审批层每次放行前人看得见命令</td></tr>
+          <tr><td><b>更新投毒</b></td><td>v1.0 干净、v1.1 塞私货，存量用户自动升级</td><td>安装锁定版本；更新是显式动作；lock 记录 version/source</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>第一类最常见也最冤：作者不是坏人，只是调试时把 <code>Authorization: Bearer sk-…</code> 留在了示例 curl 里。所以治理的第一道闸是<strong>发布前的自查</strong>：grep 一遍包体里的 <code>sk-</code>、<code>Bearer</code>、真实域名、绝对路径。ClawHub 的官方扫描会抓一部分，但扫描是下限，不是验收。</p>
+
+    <h3>只依赖三个最稳的端点</h3>
+    <p>技能的寿命长过任何一次 API 重构。画境的 HTTP API 有几十个端点，<code>huajing.mjs</code> 只用了三个：<code>/api/health</code>、<code>/api/generations</code>（POST 与 GET）、<code>/api/prompts/polish</code>。这是刻意收窄：<strong>技能脚本依赖的面越小，服务端演进时技能失配的概率越小。</strong>规划文档里把这条写成对策——「技能脚本只依赖 generations/health/polish 三个最稳定端点；画境改 API 时技能随版本跟进」。</p>
+    <p>反过来，发布方对「服务端怎么改才不弄死技能」也有了硬约束：这三个端点成了事实上的公共契约，改动它们等于宣布技能作废。这是一个健康的绑定关系——技能钉住最小公共面，服务端承诺最小公共面的稳定。</p>
+
+    <h3>治理是卖点，不是负担</h3>
+    <p>把第 6 章的分级、本章的自查与扫描连起来，消费方的安全姿态是四层：</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>层</th><th>谁负责</th><th>动作</th></tr></thead>
+        <tbody>
+          <tr><td><b>发布自查</b></td><td>技能作者</td><td>包体 grep 密钥/真实路径；示例全虚构；requires 如实声明</td></tr>
+          <tr><td><b>平台扫描</b></td><td>市场（ClawHub）</td><td>≈60s 官方扫描，结果经 <code>/scan</code> 公开</td></tr>
+          <tr><td><b>安装分级</b></td><td>消费方</td><td>text-only 直用；script-bearing 默认停用、requires 明示</td></tr>
+          <tr><td><b>执行审批</b></td><td>用户</td><td>每次脚本调用过审批；拒绝即不执行</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>这套分层在设计文档里被写成一句自我定位：<strong>「安装默认停用 + 启用确认 + 脚本走审批；市场页明示 requires——这是 AI-skill 的卖点而非负担。」</strong>一个技能市场如果只比谁家技能多，它就是在批量分发攻击面；把治理做成产品差异，风险表才翻得了面。</p>
+
+    <h3>还有两块没做完的</h3>
+    <ul>
+      <li><strong>触发与运行的观测</strong>：技能在别人家被谁触发、跑成什么样，发布者目前完全不可见（市场页有安装量计数，但没有失败率）。没有失败率的技能生态，等于没有幻觉率的搜索——错的地方自己不知道。</li>
+      <li><strong>依赖声明还不细</strong>：requires 声明了 <code>node</code>，但「需要本机 4173 端口有一个画境服务」这件事只写在 description 第三句里。前置条件应该有机器可读的位置（env / services），而不是散文——这样消费方才能在安装时真正检查，而不是靠模型读懂句子。</li>
+    </ul>
+    <figure class="fig">
+      <div class="frame"><img src="assets/art/seals.webp" alt="纸鹤用放大镜检查一排封着红蜡印的包裹，其中一只封印破损的包裹被单独放在一旁" width="1280" height="768"/></div>
+      <figcaption><b>FIG. 04</b>技能市场的货架：大多数包裹封印完好，混进一只破损的——治理就是为它设计的。</figcaption>
+    </figure>
+
+    <p>下面这枚小样把十份技能样本放进四层治理里：切换策略开关，看哪些风险被拦下、哪份「夹带密钥」的样本在弱策略下漏网。</p>
+  </div>
+
+  <div class="demo" id="demo-supply">
+    <div class="demo-head">
+      <span class="demo-tag">DEMO 04</span>
+      <span class="demo-title">供应链体检 <span class="hint">十份样本 × 四道策略</span></span>
+    </div>
+    <div class="demo-body">
+      <div class="controls">
+        <label class="switch"><input id="sup-scan" type="checkbox" checked/>必须展示官方扫描</label>
+        <label class="switch"><input id="sup-disable" type="checkbox" checked/>script-bearing 默认停用</label>
+        <label class="switch"><input id="sup-approve" type="checkbox" checked/>脚本执行走审批</label>
+        <label class="switch"><input id="sup-secret" type="checkbox"/>拦截「包内含密钥」样本</label>
+      </div>
+      <div class="sup-grid">
+        <div class="sup-table"><table id="sup-table"></table></div>
+        <div class="sup-side">
+          <div class="num-line"><span id="sup-pass">0</span><small> / 10 可安全启用</small></div>
+          <div class="row"><span>拦截的脚本样本</span><b id="sup-blocked-script">0</b></div>
+          <div class="row"><span>拦截的密钥样本</span><b id="sup-blocked-secret">0</b></div>
+          <div class="row"><span>残留风险（审批放行的脚本执行）</span><b id="sup-residual">0</b></div>
+          <p class="hintline" id="sup-note" style="margin-top:10px"></p>
+        </div>
+      </div>
+    </div>
+    <div class="demo-foot"><b>模型</b> 十份样本的属性（脚本 / 联网 / 密钥 / 自动更新）按真实生态分布构造，其中 #09 是「夹带密钥」样本、#10 是「更新投毒」样本。策略判定是布尔规则，不是评分——这也是真实门禁该有的样子。</div>
+  </div>
+</section>
+
+</main>
+<footer class="wrap site-foot">
+  <div>
+    <div>造物手记 VOL.07 · 把能力打包成技能</div>
+    <div style="margin-top:5px">SKILL / 2026.10 / 单文件 · 零依赖</div>
+  </div>
+  <div class="foot-note">文中部件与流程来自 huajing-image-gen 技能包（SKILL.md 80 行 / scripts/huajing.mjs 239 行，已发布 ClawHub v1.0.0）与 AI-skill 的 ClawHub 接入规划文档；API 边界、限流与 7.1% 泄漏率为规划文档所引事实。代码摘录为讲解节选，完整实现以仓库为准。插图由 GPT 系图像模型生成，字体为 LXGW 文楷（OFL）。</div>
+</footer>
+
+<script>
+/* 四枚确定性小样 + 阅读进度条（VOL.07 · 零依赖，全部原生 DOM）。 */
+(() => {
+  "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const pct = (v, d = 0) => (v * 100).toFixed(d) + "%";
+
+  const prog = $("#progress");
+  if (prog) {
+    const paint = () => {
+      const h = document.documentElement;
+      const max = h.scrollHeight - h.clientHeight;
+      prog.style.transform = "scaleX(" + (max > 0 ? h.scrollTop / max : 0) + ")";
+    };
+    addEventListener("scroll", paint, { passive: true });
+    addEventListener("resize", paint, { passive: true });
+    paint();
+  }
+
+  const tokens = (s) => (String(s).toLowerCase().match(/[\u4e00-\u9fff]|[a-z0-9]+/g) || []);
+
+  /* ══ DEMO 01 · SKILL.md 解剖台 ══ */
+  (() => {
+    const root = $("#demo-anat"); if (!root) return;
+    // part key → {label, html(on), htmlOff, failWhenOff:[checks]}
+    const parts = [
+      { k: "name", label: "name + slug", on: `<b>name:</b> huajing-image-gen <span class="tag">// 文件夹同名 → slug 对齐</span>`,
+        off: `<b>name:</b> huajing-skill <span class="tag">// 与文件夹不一致</span>`, fails: ["install"] },
+      { k: "desc", label: "description", on: `<b>description:</b> Generate images through a local Huajing server. <u>Use when the user asks to create or generate an image, polish an image prompt, or look up previously generated images.</u> Requires the local server and Node 18+.`,
+        off: `<b>description:</b> Huajing tools. <span class="tag">// 没有触发场景</span>`, fails: ["trigger"] },
+      { k: "req", label: "requires.bins", on: `<b>requires:</b> { <b>bins:</b> [node] } <span class="tag">// 市场页明示，缺依赖标灰</span>`,
+        off: `<span class="tag">// 无 requires 声明</span>`, fails: ["run"] },
+      { k: "setup", label: "Setup", on: `<b>## Setup</b> — 启动画境（start.bat / npm start）→ 加渠道 → 环境变量 HUAJING_BASE_URL / HUAJING_DATA_DIR`,
+        off: `<span class="tag">// Setup 段缺失</span>`, fails: [] },
+      { k: "usage", label: "Usage", on: `<b>## Usage</b> — node <b>{baseDir}</b>/scripts/huajing.mjs health | generate --prompt … | polish | gallery`,
+        off: `<span class="tag">// Usage 段缺失</span>`, fails: ["run"] },
+      { k: "exit", label: "退出码", on: `<b>Exit codes:</b> 0 success · 1 generation failed · 2 server unreachable · 3 bad usage`,
+        off: `<span class="tag">// 无退出码契约</span>`, fails: ["recover"] },
+      { k: "base", label: "{baseDir}", on: `node <b>{baseDir}</b>/scripts/huajing.mjs … <span class="tag">// 安装路径由运行时替换</span>`,
+        off: `node scripts/huajing.mjs … <span class="tag">// 相对路径：离开技能目录即 404</span>`, fails: ["portable"] },
+      { k: "notes", label: "Notes", on: `<b>## Notes</b> — exit 2 → 转告用户启动服务；exit 1 → 错误原文在 JSON error；画廊可复用，不必重新生成`,
+        off: `<span class="tag">// Notes 段缺失</span>`, fails: ["recover"] },
+    ];
+    const CHECKS = [
+      { k: "trigger", label: "可触发" }, { k: "run", label: "可执行" },
+      { k: "recover", label: "可恢复" }, { k: "portable", label: "可迁移" },
+      { k: "install", label: "可安装（slug 对齐）" },
+    ];
+    const WARN = {
+      trigger: "没有触发场景短语，Agent 永远不会选中这个技能——它装了等于没装。",
+      run: "没有命令用法或依赖声明，Agent 只能靠猜：猜对是运气，猜错是 exit 3。",
+      recover: "没有退出码与失败指引，失败时 Agent 只能盲目重试或把堆栈甩给用户。",
+      portable: "硬编码相对路径在技能目录内能跑，Agent 换了工作目录立刻 404。",
+      install: "slug 取文件夹名：name 与文件夹不一致，install 命令永远找不到这个技能。",
+    };
+    const state = {}; parts.forEach((p) => state[p.k] = true);
+    const out = $("#anat-file"), outChk = $("#anat-checks"), outWarn = $("#anat-warn");
+
+    function render() {
+      out.innerHTML =
+        `<div class="fm">---<br>` +
+        parts.filter((p) => ["name", "desc", "req"].includes(p.k))
+          .map((p) => `<span class="${state[p.k] ? "" : "off"}">${state[p.k] ? p.on : p.off}</span>`).join("<br>") +
+        `<br>---<br></div>` +
+        parts.filter((p) => !["name", "desc", "req"].includes(p.k))
+          .map((p) => `<div class="sec ${state[p.k] ? "" : "off"}">${state[p.k] ? p.on : p.off}</div>`).join("");
+      const failed = CHECKS.filter((c) => parts.some((p) => !state[p.k] && p.fails.includes(c.k)));
+      outChk.innerHTML = CHECKS.map((c) => {
+        const bad = failed.some((f) => f.k === c.k);
+        return `<div class="chk ${bad ? "bad" : "ok"}"><span>${c.label}</span><b>${bad ? "FAIL" : "OK"}</b></div>`;
+      }).join("");
+      $("#anat-num").textContent = String(CHECKS.length - failed.length);
+      const first = failed[0];
+      outWarn.classList.toggle("show", !!first);
+      if (first) outWarn.textContent = WARN[first.k];
+    }
+    $$("#anat-presets button").forEach((b) => b.addEventListener("click", () => {
+      $$("#anat-presets button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      const p = b.dataset.p;
+      parts.forEach((x) => state[x.k] = true);
+      if (p === "nodesc") state.desc = false;
+      if (p === "noexit") state.exit = false;
+      if (p === "nobase") state.base = false;
+      if (p === "noscript") { state.usage = false; state.req = false; state.notes = false; }
+      render();
+    }));
+    render();
+  })();
+
+  /* ══ DEMO 02 · 触发实验台 ══ */
+  (() => {
+    const root = $("#demo-trigger"); if (!root) return;
+    const HUAJING_ON = "通过本地画境（Huajing）服务生成图片。当用户要求创建或生成一张图片、润色图片提示词、或查找之前生成过的图片时使用。支持文生图（内部轮询）、批量数量、尺寸、负向提示词与渠道/模型选择。需要本机画境服务（默认 http://127.0.0.1:4173）与 Node 18+。";
+    const HUAJING_BROAD = "强大的图像处理工具，支持多种常见的图片操作，欢迎安装体验。";
+    const SKILLS = [
+      { name: "huajing-image-gen", get desc() { return $("#trig-broad").checked ? HUAJING_BROAD : HUAJING_ON; } },
+      { name: "clip-crop", desc: "裁剪与基础调色：按比例或像素裁剪本地图片，调整亮度与对比度。适用于用户要求简单修图、裁剪照片时。" },
+      { name: "style-tag", desc: "识别一张图片的艺术风格并输出风格标签。适用于用户询问某张图是什么画风时。" },
+      { name: "bgm-find", desc: "在本地音乐库中检索与视频情绪匹配的背景音乐。适用于剪辑配乐推荐。" },
+      { name: "pdf-sum", desc: "总结 PDF 文档要点并生成阅读笔记。适用于长文档快速阅读。" },
+      { name: "web-clip", desc: "抓取网页正文并存档为 Markdown。适用于收藏文章与离线阅读。" },
+    ];
+    const VERBS = ["生成", "创建", "画", "润色", "查找", "检索", "找", "裁剪", "总结", "抓取", "处理", "识别"];
+    const outRows = $("#trig-rows"), outHit = $("#trig-hit"), outScore = $("#trig-score"), outV = $("#trig-verdict");
+
+    function score(query, desc) {
+      const q = tokens(query), d = new Set(tokens(desc));
+      if (!q.length) return 0;
+      let cover = 0;
+      for (const t of q) if (d.has(t)) cover++;
+      const coverage = cover / q.length;
+      const ds = new Set(tokens(desc)); const qs = new Set(q);
+      let inter = 0; for (const t of qs) if (ds.has(t)) inter++;
+      const jac = inter / (qs.size + ds.size - inter);
+      let bonus = 0;
+      for (const v of VERBS) if (query.includes(v) && desc.includes(v)) bonus += 0.15;
+      bonus = Math.min(bonus, 0.3);
+      return clamp(coverage * 0.6 + jac * 0.4 + bonus, 0, 1);
+    }
+
+    function render() {
+      const q = $("#trig-q").value.trim() || "（空）";
+      const rows = SKILLS.map((s) => ({ name: s.name, desc: s.desc, sc: score(q, s.desc) }));
+      rows.sort((a, b) => b.sc - a.sc);
+      const top = rows[0];
+      const fire = top.sc >= 0.3;
+      outRows.innerHTML = rows.map((r, i) => `
+        <div class="trow ${i === 0 && fire ? "fire" : ""}">
+          <span class="nm">${r.name}</span>
+          <span><span class="ds">${r.desc}</span>
+            <span class="bar"><i style="width:${(r.sc * 100).toFixed(0)}%"></i></span></span>
+          <span class="sc"><b>${r.sc.toFixed(2)}</b></span>
+        </div>`).join("");
+      outHit.textContent = fire ? top.name : "（无）";
+      outScore.textContent = fire ? top.sc.toFixed(2) : "—";
+      const broad = $("#trig-broad").checked;
+      let verdict;
+      if (!fire) verdict = "没有任何技能过 0.30 阈值：Agent 会退回通用能力（自己写代码/直接回答）。描述太窄的代价是「永不被用」。";
+      else if (top.name === "huajing-image-gen") verdict = broad
+        ? "泛化描述仍命中了这次——但「图像处理工具」同时覆盖裁剪/调色/风格类请求，误触发只是时间问题。"
+        : "原版三段式描述命中：生成、润色、画廊三个场景都被「Use when …」短语接住。";
+      else verdict = "被「" + top.name + "」接住——更贴近用户原话的技能赢了。这是好事：description 的竞争本来就是语义重合度的竞争。";
+      outV.textContent = verdict;
+    }
+    $("#trig-presets").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-q]"); if (!b) return;
+      $$("#trig-presets button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      $("#trig-q").value = b.dataset.q;
+      render();
+    });
+    $("#trig-q").addEventListener("input", () => { $$("#trig-presets button").forEach((x) => x.setAttribute("aria-pressed", "false")); render(); });
+    $("#trig-broad").addEventListener("change", render);
+    render();
+  })();
+
+  /* ══ DEMO 03 · 安装验收流水线 ══ */
+  (() => {
+    const root = $("#demo-pipe"); if (!root) return;
+    const STEPS = [
+      { k: "publish", no: "01", b: "publish", s: "clawhub skill publish huajing-image-gen/（slug = 文件夹名）" },
+      { k: "scan", no: "02", b: "安全扫描等待", s: "≈60s 后技能才公开；轮询 /skills/{slug} 至 200" },
+      { k: "install", no: "03", b: "install", s: "clawhub install @starrysea1412/huajing-image-gen" },
+      { k: "files", no: "04", b: "落盘技能目录", s: "SKILL.md + scripts/ 到本地技能目录" },
+      { k: "health", no: "05", b: "health 探活", s: "node {baseDir}/scripts/huajing.mjs health" },
+      { k: "enable", no: "06", b: "启用确认", s: "script-bearing 默认停用；审批后才能被 Agent 调用" },
+    ];
+    const state = { fault: "none", wait: true };
+    const outPipe = $("#pipe"), outV = $("#pipe-v"), outW = $("#pipe-w");
+
+    function render() {
+      let stop = -1, why = "", verdict = "GO", notes = [];
+      const st = STEPS.map((s) => ({ ...s, status: "ok", msg: "" }));
+      const mark = (i, status, msg) => { st[i].status = status; st[i].msg = msg; if (status === "fail" && stop < 0) { stop = i; } };
+
+      if (state.fault === "slug") { mark(0, "warn", "publish 成功，但 name 与文件夹名不一致——slug 取的是文件夹名"); mark(2, "fail", "install @…/huajing-image-gen → 404：技能的 slug 其实是文件夹名"); }
+      else if (state.fault === "scan") { mark(1, "fail", "官方扫描未通过：修复包体后重新 publish，别试图绕过"); }
+      else if (state.fault === "health") { mark(4, "fail", "exit 2：cannot reach 127.0.0.1:4173 — Start it with start.bat / npm start"); }
+      else if (state.fault === "noapprove") { mark(5, "fail", "script-bearing 默认停用：未经审批的脚本调用被拒绝"); }
+      if (state.fault === "none" && !state.wait) { mark(1, "warn", "跳过等待：立即 install 会 404 —— 这是扫描延迟（≈60s），不是发布失败"); mark(2, "fail", "404：技能还在扫描队列里。先轮询 /skills/{slug} 至 200，别当成失败重发"); }
+
+      if (stop < 0) { verdict = "GO"; why = "六步全绿：可搜索、可安装、可调用、失败有指引、启用经过审批。"; }
+      else { verdict = "STOP"; why = st[stop].msg; }
+      if (state.fault === "none" && !state.wait && stop >= 0) {
+        notes.push("这条 404 骗过过作者本人：publish 成功后立刻去搜，搜不到——差点当成失败重发。");
+      }
+      if (state.fault === "health") notes.push("exit 2 的设计意图：让重试在「不可达」这一类失败上停止——重试一个没启动的服务，五次和零次没有区别。");
+      if (state.fault === "noapprove") notes.push("审批把「外来代码在我机器上执行」这个决定，从安装时的顺手一点，推迟到每次实际发生的时刻。");
+
+      outPipe.innerHTML = st.map((s, i) => {
+        const cls = s.status === "ok" ? "ok" : s.status === "warn" ? "" : "bad";
+        const label = s.status === "ok" ? "PASS" : s.status === "warn" ? "WARN" : "FAIL";
+        return `<div class="step ${cls}"><span class="no">${s.no}</span>
+          <span class="lbl"><b>${s.b}</b><small>${s.s}${s.msg ? " — " + s.msg : ""}</small></span>
+          <span class="st">${i > stop && stop >= 0 ? "PENDING" : label}</span></div>`;
+      }).join("");
+      outV.textContent = verdict;
+      outV.className = "v " + (verdict === "GO" ? "go" : "stop");
+      outW.textContent = why + (notes.length ? " " + notes.join(" ") : "");
+    }
+    $("#pipe-faults").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-f]"); if (!b) return;
+      $$("#pipe-faults button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      state.fault = b.dataset.f; render();
+    });
+    $("#pipe-wait").addEventListener("change", (e) => { state.wait = e.target.checked; render(); });
+    render();
+  })();
+
+  /* ══ DEMO 04 · 供应链体检 ══ */
+  (() => {
+    const root = $("#demo-supply"); if (!root) return;
+    const SAMPLES = [
+      { name: "prompt-polish", script: 0, net: 0, secret: 0, auto: 0, scan: 1 },
+      { name: "doc-sum", script: 0, net: 0, secret: 0, auto: 0, scan: 1 },
+      { name: "gallery-export", script: 0, net: 0, secret: 0, auto: 0, scan: 1 },
+      { name: "huajing-image-gen", script: 1, net: 0, secret: 0, auto: 0, scan: 1 },
+      { name: "repo-audit", script: 1, net: 1, secret: 0, auto: 0, scan: 1 },
+      { name: "shell-helper", script: 1, net: 1, secret: 0, auto: 0, scan: 0 },
+      { name: "api-wrapper", script: 1, net: 1, secret: 1, auto: 0, scan: 1 },
+      { name: "auto-updater", script: 1, net: 1, secret: 0, auto: 1, scan: 1 },
+      { name: "keyfetch", script: 0, net: 0, secret: 1, auto: 0, scan: 0 },
+      { name: "poison-update", script: 1, net: 1, secret: 0, auto: 1, scan: 1 },
+    ];
+    const outT = $("#sup-table"), outPass = $("#sup-pass"), outBS = $("#sup-blocked-script"),
+      outBK = $("#sup-blocked-secret"), outRes = $("#sup-residual"), outNote = $("#sup-note");
+
+    function render() {
+      const pol = {
+        scan: $("#sup-scan").checked, disable: $("#sup-disable").checked,
+        approve: $("#sup-approve").checked, secret: $("#sup-secret").checked,
+      };
+      let pass = 0, blockedScript = 0, blockedSecret = 0, residual = 0;
+      const rows = SAMPLES.map((s) => {
+        let status = "可启用", why = "";
+        if (pol.secret && s.secret) { status = "拦截：包内含密钥"; blockedSecret++; }
+        else if (pol.scan && !s.scan) { status = "拦截：无扫描记录"; }
+        else if (s.script && pol.disable && !(pol.approve)) { status = "需审批（默认停用）"; blockedScript++; }
+        else if (s.script && !pol.approve) { status = "拦截：脚本未审批"; blockedScript++; }
+        else if (s.script) { status = "可启用（每次过审批）"; residual++; }
+        if (status === "可启用" || status.startsWith("可启用")) pass++;
+        const risk = s.secret || s.auto;
+        return { s, status, risk };
+      });
+      outT.innerHTML = `<thead><tr><th>样本</th><th>脚本</th><th>联网</th><th>密钥</th><th>自动更新</th><th>状态</th></tr></thead><tbody>` +
+        rows.map((r) => `<tr class="${r.status.startsWith("拦截") ? "risk" : ""}">
+          <td><b>${r.s.name}</b></td>
+          <td class="${r.s.script ? "yes" : "no"}">${r.s.script ? "yes" : "—"}</td>
+          <td class="${r.s.net ? "yes" : "no"}">${r.s.net ? "yes" : "—"}</td>
+          <td class="${r.s.secret ? "yes" : "no"}">${r.s.secret ? "yes" : "—"}</td>
+          <td class="${r.s.auto ? "yes" : "no"}">${r.s.auto ? "yes" : "—"}</td>
+          <td>${r.status}${r.s.auto && !r.status.startsWith("拦截") ? " ⚠更新投毒面" : ""}</td>
+        </tr>`).join("") + "</tbody>";
+      outPass.textContent = String(pass);
+      outBS.textContent = String(blockedScript);
+      outBK.textContent = String(blockedSecret);
+      outRes.textContent = String(residual);
+      let n = [];
+      if (!pol.secret) n.push("关掉「拦截密钥」后，#07（API wrapper 夹带 key）与 #09（keyfetch 在文档里贴了 key）都被放行——7.1% 的泄漏率正是这么来的。");
+      if (!pol.approve && pol.disable) n.push("停用策略拦下了全部脚本样本，但「启用后每次执行」仍无审批——#10 的投毒更新靠审批兜底。");
+      if (!pol.disable) n.push("没有默认停用时，脚本样本装完即可被 Agent 调用：审批是唯一的闸，而闸只在执行时出现。");
+      if (pol.scan && pol.disable && pol.approve && pol.secret) n.push("四层全开：只剩「作者账号被盗 + 用户批准」的复合风险——这是治理的下限，不是零风险。");
+      outNote.textContent = n.join(" ") || "调整策略开关，观察每份样本的判定变化。";
+    }
+    ["sup-scan", "sup-disable", "sup-approve", "sup-secret"].forEach((id) =>
+      $("#" + id).addEventListener("change", render));
+    render();
+  })();
+})();
+
+</script>
+</body>
+</html>

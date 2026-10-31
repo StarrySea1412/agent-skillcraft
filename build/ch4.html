@@ -1,0 +1,56 @@
+<section class="chapter" id="ch4">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>04</b></div>
+    <div class="ch-title">
+      <h2>零依赖脚本</h2>
+      <p>239 行、四个退出码、JSON 走 stdout——把「会失败」写进接口，而不是留给运气。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">技能脚本的运行环境和常规工程完全不同：它跑在<strong>别人家的机器</strong>上，路径未知、包管理器未知、网络未知。所以第一条设计决策是<strong>零依赖</strong>——<code>huajing.mjs</code> 只 import <code>node:process</code>，HTTP 用 Node 18 内置的 <code>fetch</code>，JSON 解析用内置的 <code>JSON</code>。没有 <code>npm install</code>，没有 node_modules，没有版本解析。安装即解压，解压即能跑。</p>
+    <p>这不是洁癖。一个技能如果要求 <code>pip install -r requirements.txt</code> 或 <code>npm i</code>，它的安装成功率就取决于用户机器的网络、Python 版本、npm 镜像源——每一项都是一次远程失败的入口。零依赖把「安装」收敛成「复制文件」，把失败的入口从安装期推迟到运行期，而运行期的失败是可以被退出码契约管理的。</p>
+
+    <h3>失败分三类，退出码只发三种</h3>
+    <p>脚本开头定义了四个常量，整个 239 行里所有失败路径都收敛到它们：</p>
+    <div class="code">
+      <div class="code-bar"><b>scripts/huajing.mjs</b><span>第 10–13 行</span></div>
+<pre><span class="k">const</span> EXIT_OK          = <span class="n">0</span>;   <span class="c">// 成功，JSON 已写到 stdout</span>
+<span class="k">const</span> EXIT_FAILED     = <span class="n">1</span>;   <span class="c">// 生成失败：上游错误原文在 JSON error 字段</span>
+<span class="k">const</span> EXIT_UNREACHABLE = <span class="n">2</span>;   <span class="c">// 画境不可达：不要重试，去启动服务</span>
+<span class="k">const</span> EXIT_USAGE      = <span class="n">3</span>;   <span class="c">// 用法错误：读 stderr 里的 Usage</span></pre>
+    </div>
+    <p>为什么是这四个？因为它们对应 Agent 的四种不同<strong>下一步</strong>。重试策略完全不同的失败，必须用不同的出口：网络抖动（HTTP 5xx）值得重试，服务没启动不值得；参数拼错重试一百次也是 3。反过来，凡是「下一步相同」的失败都合并成一个码——404 和参数错都归 3，因为对 Agent 来说它们都意味着「检查你怎么调的」。</p>
+
+    <h3>stdout 与 stderr 的分工</h3>
+    <p>脚本的全部机器可读输出走 <code>stdout</code>，且是合法 JSON；全部人读诊断走 <code>stderr</code>——「huajing: queued 1 task(s) on provider …」「huajing: status generating, waiting...」。这条分工不是风格，是<strong>管道契约</strong>：Agent 可以放心 <code>JSON.parse(stdout)</code>，也可以把 stderr 展示给用户而不污染解析。轮询等待写进 stderr，就是为了「界面有动静、结果可解析」两全。</p>
+    <p>外加一个 <code>--plain</code> 开关：输出人类可读的路径列表而不是 JSON。它服务的是人直接在终端调试的场景——Agent 用 JSON，人用 plain，两不耽误。</p>
+
+    <h3>可执行的修复提示，而不是报错堆栈</h3>
+    <p>画境不可达时，脚本不是抛 <code>ECONNREFUSED</code> 堆栈，而是：</p>
+    <div class="code">
+      <div class="code-bar"><b>scripts/huajing.mjs</b><span>request() 的 catch 分支</span></div>
+<pre><span class="f">fail</span>(EXIT_UNREACHABLE,
+  <span class="s">`cannot reach Huajing at ${BASE_URL} (${error.cause?.code || error.message}). `</span> +
+  <span class="s">'Start it with start.bat (Windows) or `npm start` in the Huajing repo.'</span>);</pre>
+    </div>
+    <p>这句话是发布验收清单里的一条：<strong>服务未启动时给出可执行的修复提示（而非报错堆栈）</strong>。它包含三个信息：打的是哪个地址（所以 BASE_URL 被拼进消息）、失败的技术原因（cause code）、以及下一步动作（start.bat / npm start）。Agent 拿到它可以直接转述给用户——这就是「错误信息是产品文案」在技能层的样子。</p>
+
+    <h3>轮询：截止时间与「不撤回」的诚实</h3>
+    <p>生图是异步任务：提交后轮询 <code>GET /api/generations/{id}</code>，退避间隔 1s/2s/3s 封顶。轮询有一个 <code>--timeout</code>（默认 300 秒）的截止线，超时的处理值得抄下来：</p>
+    <div class="code">
+      <div class="code-bar"><b>scripts/huajing.mjs</b><span>pollGeneration</span></div>
+<pre><span class="k">if</span> (Date.now() &gt; deadline) {
+  <span class="f">fail</span>(EXIT_FAILED, <span class="s">`timed out after ${timeoutSeconds}s; the task may still finish — `</span> +
+    <span class="s">`check the gallery later (record id: ${id})`</span>);
+}</pre>
+    </div>
+    <p>注意这句文案：<strong>任务可能仍然会完成</strong>。生图任务在服务端继续跑，超时只是客户端放弃等待，不是任务失败。把 record id 留在错误消息里，用户拿着它可以去画廊把图找回来——「重试」反而会浪费渠道调用。错误消息里写清「放弃了什么、留下了什么」，Agent 才能做出正确的下一步。</p>
+    <div class="note"><b>密钥去哪了：</b>包里没有也不该有 API key。画境的渠道密钥存在画境服务自己的配置里，技能只对本机 127.0.0.1 说话。这让「装技能」和「配密钥」成为两个独立动作——第 7 章会看到，这个分离正是 7.1% 泄漏率的反面。</div>
+    <p>脚本就绪之后是发布。下一篇走一遍从 <code>clawhub login</code> 到线上可装的完整流水线，以及那条最容易被坑的 slug 规则。</p>
+  </div>
+
+  <figure class="fig">
+    <div class="frame"><img src="assets/art/clockwork.webp" alt="纸鹤在工作台上组装一个完全自包含的钟表机芯，齿轮与发条合拢，没有任何导线连出装置" width="1280" height="768"/></div>
+    <figcaption><b>FIG. 02</b>零依赖：整个装置自包含，没有一根线连到外面——安装即解压，解压即能跑。</figcaption>
+  </figure>
+</section>

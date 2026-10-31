@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<link rel="preload" href="../assets/fonts/wenkai-regular.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="../assets/fonts/wenkai-medium.woff2" as="font" type="font/woff2" crossorigin/>
+<title>把能力打包成技能 · 技术栈全景图</title>
+<style>
+@font-face{font-family:"LXGW WenKai";src:url("../assets/fonts/wenkai-regular.woff2") format("woff2");font-weight:300 599;font-display:swap}
+@font-face{font-family:"LXGW WenKai";src:url("../assets/fonts/wenkai-medium.woff2") format("woff2");font-weight:600 900;font-display:swap}
+:root{
+  --paper:#ece4d2;--surface:#fbf8f0;--ink:#241f18;--ink2:#4a4237;--muted:#7a705f;--faint:#9a917e;
+  --line:#d9cfba;--line2:#e8e0cd;--teal:#2b5f5a;--teal-soft:#dfeae6;--ox:#a03b2a;--ox-soft:#f3e0da;
+  --brass:#8a6a2f;--brass-soft:#f0e6cf;--mono:ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{width:900px;background:var(--paper);color:var(--ink);font-family:"LXGW WenKai",-apple-system,"PingFang SC",sans-serif;padding:44px 46px 38px;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(700px 340px at 84% -6%,rgba(43,95,90,.08),transparent 62%)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:2px solid var(--ink);padding-bottom:15px}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--ox);margin:0 0 9px}
+h1{margin:0;font-size:33px;line-height:1.2;letter-spacing:-.01em;font-weight:800}
+h1 em{font-style:normal;color:var(--teal)}
+.head .meta{text-align:right;font-family:var(--mono);font-size:9.5px;line-height:1.95;color:var(--faint);letter-spacing:.06em;white-space:nowrap}
+.dek{margin:16px 0 22px;font-size:13px;line-height:1.85;color:var(--ink2);max-width:750px}
+.legend{display:grid;grid-template-columns:56px 1fr;font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--faint);margin-bottom:6px}
+.legend span:nth-child(2){padding-left:15px}
+.layer{display:grid;grid-template-columns:56px 1fr;border-top:1px solid var(--line)}
+.layer:last-of-type{border-bottom:1px solid var(--line)}
+.lname{background:var(--brass-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:13px 0;border-right:1px solid var(--line)}
+.lname b{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--ox)}
+.lname span{writing-mode:vertical-rl;font-size:10px;letter-spacing:.24em;color:var(--muted);margin-top:9px}
+.cells{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line2);padding:1px 0 1px 1px}
+.cell{background:var(--surface);padding:11px 12px 10px;min-height:96px;position:relative}
+.cell h3{margin:0 0 3px;font-size:13.5px;font-weight:700;line-height:1.35}
+.cell .en{font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:#a09781;display:block;margin-bottom:6px}
+.cell p{margin:0;font-size:10.5px;line-height:1.72;color:#5d5545}
+.cell.key{background:var(--teal-soft)}
+.cell.key h3{color:var(--teal)}
+.cell.warn{background:var(--ox-soft)}
+.cell.warn h3{color:var(--ox)}
+.cell.amber{background:var(--brass-soft)}
+.cell.amber h3{color:var(--brass)}
+.cell .badge{position:absolute;top:8px;right:9px;font-family:var(--mono);font-size:7px;letter-spacing:.08em;color:#a09781}
+.foot{display:grid;grid-template-columns:1.35fr 1fr;gap:26px;margin-top:22px;border-top:2px solid var(--ink);padding-top:14px}
+.foot h4{margin:0 0 7px;font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;color:var(--ox);font-weight:700}
+.foot p{margin:0 0 7px;font-size:10.5px;line-height:1.8;color:#5d5545}
+.eq{font-family:var(--mono);font-size:9.5px;color:#4a5245;line-height:2.05}
+.eq b{color:var(--ox);font-weight:600}
+.eq i{color:var(--teal);font-style:normal}
+.stamp{display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:#a09781}
+.stamp b{color:var(--teal);font-weight:600}
+</style>
+</head>
+<body>
+<div class="head">
+  <div>
+    <p class="eyebrow">FIELD NOTES · VOL.07 · STACK MAP</p>
+    <h1>把能力<em>打包成技能</em> · 技术栈全景</h1>
+  </div>
+  <div class="meta">造物手记 VOL.07<br/>2026.10<br/>StarrySea1412</div>
+</div>
+<p class="dek">一个可分发的技能包由六层组成。越往上越接近「契约」，越往下越接近「分发」。这张图不是格式清单，是责任划分：每一格都在回答同一个问题——拿到包的人凭什么能像作者一样用它？</p>
+
+<div class="legend"><span>LAYER</span><span>SUBSYSTEMS ／ 每一格 = 一个必须写进包里的承诺</span></div>
+
+<div class="layer">
+  <div class="lname"><b>L5</b><span>触发层</span></div>
+  <div class="cells">
+    <div class="cell key"><h3>description</h3><span class="en">TRIGGER</span><p>能力—触发—前提三段式；给机器读，不是给人读。</p><span class="badge">50 WORDS</span></div>
+    <div class="cell"><h3>name / slug</h3><span class="en">IDENTITY</span><p>slug 取文件夹名；name 与文件夹保持一字不差。</p></div>
+    <div class="cell"><h3>requires</h3><span class="en">BINS / ENV</span><p>声明 node 18+ 与环境变量；消费方据此标灰缺依赖。</p></div>
+    <div class="cell"><h3>负向指引</h3><span class="en">NOTES</span><p>「exit 2 不是技能的错」——失败归属也参与触发决策。</p></div>
+  </div>
+</div>
+
+<div class="layer">
+  <div class="lname"><b>L4</b><span>契约层</span></div>
+  <div class="cells">
+    <div class="cell key"><h3>退出码</h3><span class="en">EXIT CODES</span><p>0 / 1 / 2 / 3；按「下一步该做什么」分类，不按技术原因。</p><span class="badge">CONTRACT</span></div>
+    <div class="cell key"><h3>管道分工</h3><span class="en">STDOUT/ERR</span><p>机器读 stdout（合法 JSON）；人读 stderr（诊断）。</p></div>
+    <div class="cell"><h3>可执行修复提示</h3><span class="en">HINT</span><p>地址 + cause code + 下一步动作（start.bat），拒绝堆栈。</p></div>
+    <div class="cell"><h3>诚实超时</h3><span class="en">TIMEOUT</span><p>超时 ≠ 任务失败：留下 record id，画廊可复用。</p></div>
+  </div>
+</div>
+
+<div class="layer">
+  <div class="lname"><b>L3</b><span>包体层</span></div>
+  <div class="cells">
+    <div class="cell key"><h3>零依赖脚本</h3><span class="en">ZERO DEPS</span><p>Node 18 内置 fetch；无 npm install——安装即解压。</p></div>
+    <div class="cell"><h3>{baseDir} 占位</h3><span class="en">PORTABLE PATH</span><p>一切路径占位或协议相对；硬编码相对路径是 404 之源。</p></div>
+    <div class="cell warn"><h3>零密钥</h3><span class="en">NO SECRETS</span><p>密钥在服务配置里；技能只对本机 127.0.0.1 说话。</p></div>
+    <div class="cell"><h3>最小依赖面</h3><span class="en">3 ENDPOINTS</span><p>只钉 health / generations / polish 三个最稳端点。</p></div>
+  </div>
+</div>
+
+<div class="layer">
+  <div class="lname"><b>L2</b><span>分发层</span></div>
+  <div class="cells">
+    <div class="cell"><h3>CLI 发布</h3><span class="en">PUBLISH</span><p>login --device → inspect → publish + changelog。</p></div>
+    <div class="cell amber"><h3>API 发布</h3><span class="en">MULTIPART</span><p>clh_ token + POST /skills（payload JSON + files[]）。</p></div>
+    <div class="cell"><h3>安全扫描</h3><span class="en">SCAN ≈60s</span><p>publish ≠ 公开；轮询 /skills/{slug} 至 200 再验收。</p></div>
+    <div class="cell"><h3>限流礼仪</h3><span class="en">RATE LIMIT</span><p>读 3000/min/IP 免 token；写 300；429 尊重 Retry-After。</p></div>
+  </div>
+</div>
+
+<div class="layer">
+  <div class="lname"><b>L1</b><span>治理层</span></div>
+  <div class="cells">
+    <div class="cell key"><h3>安装 ≠ 启用</h3><span class="en">DEFAULT OFF</span><p>script-bearing 默认停用，启用需人工确认。</p><span class="badge">RELEASE</span></div>
+    <div class="cell"><h3>分级</h3><span class="en">text-only / script</span><p>文本直用；脚本每次执行过受控审批。</p></div>
+    <div class="cell"><h3>出处三件套</h3><span class="en">PROVENANCE</span><p>requires 明示 + scan 展示 + 回链作者页。</p></div>
+    <div class="cell"><h3>卸载闭环</h3><span class="en">UNINSTALL</span><p>缓存目录与转换产物同步清理；lock 记版本来源。</p></div>
+  </div>
+</div>
+
+<div class="layer">
+  <div class="lname"><b>L0</b><span>风险层</span></div>
+  <div class="cells">
+    <div class="cell warn"><h3>7.1% 泄漏率</h3><span class="en">SNYK</span><p>密钥 / PII 入包：发布前 grep sk- / Bearer / 真实路径。</p></div>
+    <div class="cell warn"><h3>提示注入</h3><span class="en">INJECTION</span><p>SKILL.md 是给模型读的指令——分级与审批是唯一闸门。</p></div>
+    <div class="cell warn"><h3>更新投毒</h3><span class="en">UPDATE</span><p>lock 锁版本；更新是显式动作；内容寻址待做。</p></div>
+    <div class="cell"><h3>API 演进</h3><span class="en">DRIFT</span><p>适配器隔离协议变化；每版本跑验收清单。</p></div>
+  </div>
+</div>
+
+<div class="foot">
+  <div>
+    <h4>WHY THIS SHAPE</h4>
+    <p>上面三层决定「别人能不能用起来」，中间一层决定「能不能发出去」，下面两层决定「装到别人家后出了事算谁的」。所有技能事故几乎都发生在两层之间的缝隙：description 太窄没人触发、退出码缺失导致盲目重试、密钥顺手进了示例。</p>
+    <p>huajing-image-gen 全包 319 行：80 行文档 + 239 行脚本，0 个 npm 依赖，3 个服务端点。它的价值不在规模，而在每一个承诺都被写进了包体。</p>
+  </div>
+  <div>
+    <h4>THE ARITHMETIC</h4>
+    <div class="eq">
+      2 files / <b>319 lines</b> / 0 deps<br/>
+      exit codes: 0 · 1 · <i>2 · 3</i><br/>
+      触发三段式：<i>能力 → Use when → 前提</i><br/>
+      读 3000/min · 写 <b>300/min</b> · 扫描 ≈60s<br/>
+      泄漏率 7.1% → <i>四层治理</i>
+    </div>
+  </div>
+</div>
+
+<div class="stamp"><span>READ · <b>把能力打包成技能</b> · 从一段私有提示词到一个可分发的能力包</span><span>STARRYSEA · 造物手记 VOL.07</span></div>
+</body>
+</html>

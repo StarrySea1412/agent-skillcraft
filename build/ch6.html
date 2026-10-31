@@ -1,0 +1,47 @@
+<section class="chapter" id="ch6">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>06</b></div>
+    <div class="ch-title">
+      <h2>装到别人家</h2>
+      <p>安装 ≠ 启用。text-only 与 script-bearing 分级治理，是消费方的纪律，也是发布方的设计前提。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">发布只是技能的出厂。技能真正被使用，是在另一个 Agent 体系里走完「搜索 → 安装 → 转换 → 启用 → 调用 → 卸载」的完整生命周期。这套流程的每一步都有治理决策，而决策的分界线只有一条：<strong>这个技能带不带可执行脚本。</strong></p>
+    <p>我在 AI-skill（自己的 Hermes 工作台）里规划消费方市场时，把这条线画成了硬分级：</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>分级</th><th>判定</th><th>装完之后</th><th>调用时</th></tr></thead>
+        <tbody>
+          <tr><td><b>text-only</b></td><td>SKILL.md 不引用 <code>{baseDir}</code> 下的脚本、不声明 bins</td><td>转换后即可用（仍受模板工具白名单约束）</td><td>不额外审批</td></tr>
+          <tr><td><b>script-bearing</b></td><td>正文引用 <code>{baseDir}</code> 脚本，或 <code>requires.bins</code> 非空</td><td><strong>默认停用</strong>，启用需人工确认；缺 bins 的在列表里标灰</td><td>每次执行走受控审批</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><code>huajing-image-gen</code> 是典型的 script-bearing：声明了 <code>bins: [node]</code>，正文里有 <code>{baseDir}/scripts/huajing.mjs</code>。装进 AI-skill 这样的消费方时，它的预期生命周期是：安装成功但状态「需审批」→ 用户看过 <code>requires</code>（node + 本机画境服务）后启用 → 每次 Agent 真要跑脚本时弹审批。审批不是形式：它把「外来代码在我机器上执行」这个决定，从安装时的顺手一点，推迟到每次实际发生的时刻。</p>
+
+    <h3>转换：目录制到扁平制的有损边界</h3>
+    <p>消费方体系若是扁平 Markdown 注入（技能文本拼进 system prompt），目录制技能就要过一道转换器。转换规则里最有意思的是<strong>分级判定</strong>：</p>
+    <ul>
+      <li>frontmatter 的 <code>name / description</code> 直取——它们本来就是给机器读的；</li>
+      <li><code>version</code> 取 <code>metadata.openclaw.version</code>，缺失则回落到 lock 文件；</li>
+      <li><code>tags</code> 补 <code>[clawhub, &lt;owner&gt;]</code>——来源必须跟着技能走，审计时能追到发布者；</li>
+      <li>正文原样保留，但 script-bearing 技能转换成「工具说明」文本，显式标注所需 bins/env，执行指令改为「走审批调脚本」。</li>
+    </ul>
+    <p>这条有损边界是刻意设计的：<strong>文本注入的世界里，脚本不该被「描述」，而该被「申请」。</strong>把 <code>node {baseDir}/scripts/huajing.mjs generate …</code> 写进 system prompt，等于告诉模型「你可以随手执行任何命令」；转换成审批式的工具说明，等于把执行权收回到人手里。</p>
+
+    <h3>市场页的三条信息义务</h3>
+    <p>消费方展示技能卡片时，有三样东西必须明示，不能藏在「详情」里：</p>
+    <ul>
+      <li><strong>requires</strong>：需要 node 18+、需要本机画境服务——让安装者在装之前就知道这个技能能不能在自己家跑起来；</li>
+      <li><strong>scan</strong>：ClawHub 官方安全扫描结果直接展示，不重扫、不转述；</li>
+      <li><strong>回链</strong>：<code>clawhub.ai/&lt;owner&gt;/skills/&lt;slug&gt;</code>——出处可点，作者可查，版本可追。</li>
+    </ul>
+    <p>外加一条降级纪律：ClawHub 不可达时，市场 tab 整体隐藏，工作台其余功能零影响。市场是增强，不是依赖。</p>
+
+    <h3>卸载与更新的闭环</h3>
+    <p>卸载要同步清理两处：技能缓存目录与转换产物（<code>hermes_skills/clawhub/&lt;slug&gt;.md</code>）。残留的转换产物是隐患——技能已删，注入链路里却还在引用它的描述，Agent 会在不存在的技能上浪费触发。更新同理：新版本落地时旧转换产物必须被覆盖，lock 文件记录 slug/version/source/installed_at，让「现在装的是哪个版本」永远有据可查。</p>
+    <div class="pull">消费方的纪律反过来约束发布方：<strong>如果 requires 不写清楚、路径不使用 {baseDir}、失败不给退出码，技能在别人家的生命周期第一步就会卡住。</strong>治理不是发布之后的额外工作，是包体本身的一部分。</div>
+    <p>最后一章讲剩下的那个问题：当技能市场成为一个生态，包体里可能藏什么，以及 7.1% 这个数字该怎么读。</p>
+  </div>
+</section>

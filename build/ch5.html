@@ -1,0 +1,85 @@
+<section class="chapter" id="ch5">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>05</b></div>
+    <div class="ch-title">
+      <h2>发布流水线</h2>
+      <p>从 <code>clawhub login</code> 到另一台机器能装能跑：五步、一条 slug 规则、一次 ≈60 秒的安全扫描。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">发布这五步，官方文档十分钟就能读完。真正费时间的是第五步——<strong>验收</strong>——以及一个藏在第一步里的命名陷阱。先走流程：</p>
+    <div class="code">
+      <div class="code-bar"><b>发布命令序列</b><span>v1.0.0 实录</span></div>
+<pre><span class="c"># 1. 账号：GitHub 设备流授权（token 落在本机配置）</span>
+npm i -g clawhub
+clawhub login --device
+
+<span class="c"># 2. 本地校验 frontmatter</span>
+clawhub inspect huajing-image-gen/
+
+<span class="c"># 3. 发布（文件夹名 = slug）</span>
+clawhub skill publish huajing-image-gen/   <span class="c"># 附 changelog v1.0.0</span>
+<span class="c"># ≈60s 安全扫描后才公开 —— 验收时别把这段延迟当成失败</span>
+
+<span class="c"># 4. 闭环：在另一台机器 / WSL 里安装并真实调用</span>
+clawhub install @starrysea1412/huajing-image-gen
+node …/scripts/huajing.mjs health &amp;&amp; … generate --prompt <span class="s">"…"</span></pre>
+    </div>
+
+    <h3>slug 就是文件夹名</h3>
+    <p>发布后技能的 URL 是 <code>clawhub.ai/&lt;owner&gt;/skills/&lt;slug&gt;</code>，而 <strong>slug 取自文件夹名，不是 frontmatter 的 name</strong>。这意味着三件事：文件夹命名要从发布视角起（kebab-case、含能力词）；<code>name</code> 与文件夹名保持一致，避免「装的是 A、文档说自己是 B」；如果非要不同名，CLI 的发布参数可以覆盖 slug——但覆盖是例外，对齐是默认。这次发布里，目录名直接定为 <code>huajing-image-gen</code>，与 name 一字不差。</p>
+
+    <h3>安全扫描是异步的</h3>
+    <p>publish 返回成功 ≠ 技能已公开：ClawHub 会对包体跑一次官方安全扫描，<strong>约 60 秒后</strong>技能才出现在搜索与安装列表里。这次发布时，publish 后立刻去搜，搜不到——差点当成失败重发。事后知道这是正常流程，任何自动化发布脚本都应该把「扫描等待」设计进去：轮询 <code>/skills/{slug}</code> 直到 200，或者干脆 sleep 一分钟再验收。</p>
+    <p>扫描结果本身也是公开资产：<code>GET /api/v1/skills/{slug}/scan</code> 返回官方扫描结论。消费方（第 6 章的技能市场）会把它直接展示在安装页——发布者应该主动看一眼自己技能的扫描报告，别让第一个发现问题的不是我。</p>
+
+    <h3>读接口是公共设施，写接口才要 token</h3>
+    <p>ClawHub 的 API 边界划得很清楚：<strong>读全部免 token</strong>（search / skills / versions / scan / download，限流 3000/min/IP），<strong>写需要 <code>clh_</code> token</strong>（multipart 发布、下架、更名，限流 300/min/IP）。OpenAPI 规范在 <code>/api/v1/openapi.json</code>，官方明确欢迎第三方目录复用读接口——条件是缓存结果、尊重 429 的 <code>Retry-After</code>、展示处回链技能页。</p>
+    <p>这三条合规义务值得照抄，因为它们是「把公共 API 当公共设施」的最小礼仪：缓存意味着不把自己的流量转嫁给对方；尊重退避意味着限流是合作信号而不是敌意；回链意味着流量有出处。</p>
+
+    <h3>验收清单：发布不算完，闭环才算完</h3>
+    <ul>
+      <li><strong>可搜索</strong>：等扫描过后在 ClawHub 搜 <code>huajing</code>，技能出现；</li>
+      <li><strong>可安装</strong>：在另一台机器 / WSL 里 <code>clawhub install</code>，文件落在本地技能目录；</li>
+      <li><strong>可调用</strong>：<code>health</code> 通、真实 <code>generate</code> 出图；</li>
+      <li><strong>失败时给指引</strong>：故意不启动画境再调一次，确认拿到的是「启动服务」提示而不是堆栈；</li>
+      <li><strong>版本链路</strong>：改一处 description，重新 publish 出 v1.0.1，确认更新可被拉到。</li>
+    </ul>
+    <p>最后一条常被跳过，但它验证的是<strong>更新通道</strong>：v1.0.0 发布成功只证明创建，不证明「下次改完还能推上去」。发布系统的bug往往藏在第二次发布里。</p>
+    <div class="note"><b>自动化路线：</b>CLI 之外，网页创建 <code>clh_</code> token 后可以直接 <code>POST /api/v1/skills</code>（multipart：payload JSON + files[]）。技能源码放进主仓库子目录（<code>ai-image-studio/clawhub-skill/</code>），随主版本走——CI 化时一条流水线同时出服务版本和技能版本，避免两处维护漂移。</div>
+    <figure class="fig">
+      <div class="frame"><img src="assets/art/stamp.webp" alt="纸鹤站在发货柜台前，用一枚大圆橡皮章在木箱上盖出砖红的环形印记，传送带上还有两只木箱" width="1280" height="768"/></div>
+      <figcaption><b>FIG. 03</b>发布不是终点：盖章之后还有 ≈60 秒的扫描队列，验收从另一台机器开始。</figcaption>
+    </figure>
+
+    <p>下面这枚小样把发布与安装验收做成可操作的状态机：每一步都可以注入失败，看流水线如何停、回滚到哪、提示写什么。</p>
+  </div>
+
+  <div class="demo" id="demo-pipe">
+    <div class="demo-head">
+      <span class="demo-tag">DEMO 03</span>
+      <span class="demo-title">安装验收流水线 <span class="hint">注入失败，看它停在哪、怎么说</span></span>
+    </div>
+    <div class="demo-body">
+      <div class="controls">
+        <div class="ctl" style="flex:0 0 auto">
+          <label>故障注入</label>
+          <div class="seg" id="pipe-faults">
+            <button data-f="none" aria-pressed="true">无故障</button>
+            <button data-f="slug" aria-pressed="false">slug 不一致</button>
+            <button data-f="scan" aria-pressed="false">扫描未过</button>
+            <button data-f="health" aria-pressed="false">服务未启动</button>
+            <button data-f="noapprove" aria-pressed="false">脚本未审批</button>
+          </div>
+        </div>
+        <label class="switch"><input id="pipe-wait" type="checkbox" checked/>发布后等待 ≈60s 安全扫描</label>
+      </div>
+      <div class="pipe" id="pipe"></div>
+      <div class="pipe-out">
+        <span class="v stop" id="pipe-v">STOP</span>
+        <span class="w" id="pipe-w">选一个故障注入，或直接看无故障路径。</span>
+      </div>
+    </div>
+    <div class="demo-foot"><b>模型</b> 六步状态机与提示文案对应真实流程：publish → 扫描等待 → install（slug=文件夹名）→ 落盘技能目录 → health 探活 → 启用确认。脚本型技能默认停用，启用即审批——第 6 章展开。</div>
+  </div>
+</section>

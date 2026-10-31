@@ -1,0 +1,39 @@
+<section class="chapter" id="closing">
+  <div class="ch-head">
+    <div class="ch-num">END<b>00</b></div>
+    <div class="ch-title">
+      <h2>结语：能力要能离开你</h2>
+      <p>打包不是把提示词存成文件，是把「我会」翻译成「任何人装了就能会」。</p>
+    </div>
+  </div>
+  <div class="epilogue">
+    <p class="lead">把这次打包收拢，它其实只做了三件事：<strong>立契约</strong>（四个退出码、JSON 走 stdout）、<strong>留路标</strong>（description 的三段式、requires 明示、{baseDir} 占位）、<strong>交底</strong>（Notes 里的失败指引、scan 公开、回链可查）。三件事都不难，难的是心态——把「我自己知道就行」换成「拿到包的人一无所知」。</p>
+    <p>319 行、2 个文件，换来的是能力第一次离开了我：它可以在任何装了 Node 的机器上被另一个 Agent 调用，失败时有路标，出处可追，版本可锁。这就是「技能」和「提示词」的全部区别，也是全部价值。</p>
+
+    <h3 style="font-size:22px;margin:32px 0 8px">三条可以搬走的做法</h3>
+    <div class="rules">
+      <div class="rule"><b>RULE 01 / 先枚举失败，再写流程</b><p>退出码是技能的骨架：把失败按「下一步该做什么」分类（重试 / 转告 / 检查用法），每一类一个出口。错误消息里写清「打的是哪个地址、失败的技术原因、下一步动作」——这是给 Agent 的，不是给人的。</p></div>
+      <div class="rule"><b>RULE 02 / description 是给机器读的测试集</b><p>用「能力—触发—前提」三段式：第一句立边界，第二句列具体触发场景，第三句交前置条件。拿十条用户原话检查能不能接住，再拿五条不该接的话检查会不会误接。</p></div>
+      <div class="rule"><b>RULE 03 / 依赖面越小，寿命越长</b><p>技能脚本只钉住服务端最稳定的最小端点集；requires 如实声明；密钥永远不进包。发布前 grep 一遍密钥与真实路径，平台扫描是下限不是验收。</p></div>
+    </div>
+
+    <h3 style="font-size:22px;margin:32px 0 8px">这篇文没解决的问题</h3>
+    <div class="limits">
+      <p><b>触发没有测试集。</b>description 的调优靠人工想象用户原话；触发日志（哪句选中、哪句漏选）还没有落盘，攒够二十条才能做成回归集。</p>
+      <p><b>前置条件还是散文。</b>「需要本机 4173 端口有画境服务」写在 description 里，requires 位置还没有机器可读的服务依赖声明，消费方无法在安装时真正检查。</p>
+      <p><b>发布者看不到运行情况。</b>安装量有计数，失败率没有。技能在别人家跑挂了，我是最后一个知道的。</p>
+      <p><b>消费方市场还没落地。</b>分级治理（默认停用 / 审批 / scan 展示）目前是规划与骨架，AI-skill 的技能市场尚未上线——这篇文里的「第 6 章」有一半还是设计，不是实现。</p>
+      <p><b>更新投毒只能靠锁版本。</b>作者账号被盗后推送恶意更新，现有的 lock 与审批能拦住执行，但拦不住「已自动拉取」。内容寻址（按哈希安装）是更彻底的解，还没有做。</p>
+    </div>
+
+    <h3 style="font-size:22px;margin:32px 0 8px">制作说明</h3>
+    <p style="font-size:13.5px;color:var(--muted)">本文是「造物手记」第七篇，素材来自 <code>ai-image-studio/clawhub-skill/huajing-image-gen/</code>（80 行 SKILL.md + 239 行零依赖脚本）与 <code>AI-skill/docs/clawhub-integration-plan.md</code>（ClawHub 接入规划：API 边界、限流、发布与消费方治理）。技能已发布于 ClawHub（starrysea1412/huajing-image-gen v1.0.0，闭环验收过）。四枚小样均为确定性模型：触发打分、部件-后果映射、六步验收状态机、布尔门禁，公式与规则写在正文与脚注。插图五张由 GPT 系图像模型生成；字体为 LXGW 文楷子集；页面零构建、零依赖，单文件交付。</p>
+
+    <div class="links">
+      <a href="https://clawhub.ai/starrysea1412/skills/huajing-image-gen">huajing-image-gen on ClawHub →</a>
+      <a href="https://github.com/StarrySea1412/ai-image-studio">画境源码 →</a>
+      <a href="https://starrysea1412.github.io/agent-eval/">上一篇：给 Agent 打分 →</a>
+      <a href="https://starrysea1412.github.io/seeflow-story/">让 Agent 亲眼看一眼 →</a>
+    </div>
+  </div>
+</section>

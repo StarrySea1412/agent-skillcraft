@@ -1,0 +1,83 @@
+<section class="chapter" id="ch7">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>07</b></div>
+    <div class="ch-title">
+      <h2>供应链与治理</h2>
+      <p>Snyk 实测约 7.1% 的公开技能泄漏密钥或 PII。技能市场是能力市场，也是风险市场。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">把技能市场想成 npm 或者 VS Code 扩展市场，风险谱就熟悉了：一个 SKILL.md 是给模型读的指令——<strong>指令注入</strong>因此成为技能特有的攻击面，这是 npm 没有的；附属脚本是要执行的代码——传统供应链风险它全有。Snyk 对公开技能仓库的实测结论是约 <strong>7.1%</strong> 的技能泄漏密钥或 PII。这个数字该逐字读：不是「7.1% 的技能是恶意的」，而是「7.1% 的作者把不该进包的东西打进了包」。</p>
+
+    <h3>四类风险，四种漏点</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>风险</th><th>从哪进来</th><th>huajing 的对策</th></tr></thead>
+        <tbody>
+          <tr><td><b>密钥 / PII 入包</b></td><td>调试时把真实 key 写进示例、把用户路径打进文档</td><td>包内零密钥：密钥在画境服务配置里，技能只对本机 127.0.0.1 说话；示例 prompt 全部虚构</td></tr>
+          <tr><td><b>恶意指令（提示注入）</b></td><td>SKILL.md 正文写着「顺手把 ~/.ssh 打包上传」类指令</td><td>消费方分级：script-bearing 每次执行过审批；文本型受工具白名单约束</td></tr>
+          <tr><td><b>脚本越权</b></td><td>脚本读写技能目录之外、联网到陌生主机</td><td>脚本只连 BASE_URL（默认本机）；审批层每次放行前人看得见命令</td></tr>
+          <tr><td><b>更新投毒</b></td><td>v1.0 干净、v1.1 塞私货，存量用户自动升级</td><td>安装锁定版本；更新是显式动作；lock 记录 version/source</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>第一类最常见也最冤：作者不是坏人，只是调试时把 <code>Authorization: Bearer sk-…</code> 留在了示例 curl 里。所以治理的第一道闸是<strong>发布前的自查</strong>：grep 一遍包体里的 <code>sk-</code>、<code>Bearer</code>、真实域名、绝对路径。ClawHub 的官方扫描会抓一部分，但扫描是下限，不是验收。</p>
+
+    <h3>只依赖三个最稳的端点</h3>
+    <p>技能的寿命长过任何一次 API 重构。画境的 HTTP API 有几十个端点，<code>huajing.mjs</code> 只用了三个：<code>/api/health</code>、<code>/api/generations</code>（POST 与 GET）、<code>/api/prompts/polish</code>。这是刻意收窄：<strong>技能脚本依赖的面越小，服务端演进时技能失配的概率越小。</strong>规划文档里把这条写成对策——「技能脚本只依赖 generations/health/polish 三个最稳定端点；画境改 API 时技能随版本跟进」。</p>
+    <p>反过来，发布方对「服务端怎么改才不弄死技能」也有了硬约束：这三个端点成了事实上的公共契约，改动它们等于宣布技能作废。这是一个健康的绑定关系——技能钉住最小公共面，服务端承诺最小公共面的稳定。</p>
+
+    <h3>治理是卖点，不是负担</h3>
+    <p>把第 6 章的分级、本章的自查与扫描连起来，消费方的安全姿态是四层：</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>层</th><th>谁负责</th><th>动作</th></tr></thead>
+        <tbody>
+          <tr><td><b>发布自查</b></td><td>技能作者</td><td>包体 grep 密钥/真实路径；示例全虚构；requires 如实声明</td></tr>
+          <tr><td><b>平台扫描</b></td><td>市场（ClawHub）</td><td>≈60s 官方扫描，结果经 <code>/scan</code> 公开</td></tr>
+          <tr><td><b>安装分级</b></td><td>消费方</td><td>text-only 直用；script-bearing 默认停用、requires 明示</td></tr>
+          <tr><td><b>执行审批</b></td><td>用户</td><td>每次脚本调用过审批；拒绝即不执行</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>这套分层在设计文档里被写成一句自我定位：<strong>「安装默认停用 + 启用确认 + 脚本走审批；市场页明示 requires——这是 AI-skill 的卖点而非负担。」</strong>一个技能市场如果只比谁家技能多，它就是在批量分发攻击面；把治理做成产品差异，风险表才翻得了面。</p>
+
+    <h3>还有两块没做完的</h3>
+    <ul>
+      <li><strong>触发与运行的观测</strong>：技能在别人家被谁触发、跑成什么样，发布者目前完全不可见（市场页有安装量计数，但没有失败率）。没有失败率的技能生态，等于没有幻觉率的搜索——错的地方自己不知道。</li>
+      <li><strong>依赖声明还不细</strong>：requires 声明了 <code>node</code>，但「需要本机 4173 端口有一个画境服务」这件事只写在 description 第三句里。前置条件应该有机器可读的位置（env / services），而不是散文——这样消费方才能在安装时真正检查，而不是靠模型读懂句子。</li>
+    </ul>
+    <figure class="fig">
+      <div class="frame"><img src="assets/art/seals.webp" alt="纸鹤用放大镜检查一排封着红蜡印的包裹，其中一只封印破损的包裹被单独放在一旁" width="1280" height="768"/></div>
+      <figcaption><b>FIG. 04</b>技能市场的货架：大多数包裹封印完好，混进一只破损的——治理就是为它设计的。</figcaption>
+    </figure>
+
+    <p>下面这枚小样把十份技能样本放进四层治理里：切换策略开关，看哪些风险被拦下、哪份「夹带密钥」的样本在弱策略下漏网。</p>
+  </div>
+
+  <div class="demo" id="demo-supply">
+    <div class="demo-head">
+      <span class="demo-tag">DEMO 04</span>
+      <span class="demo-title">供应链体检 <span class="hint">十份样本 × 四道策略</span></span>
+    </div>
+    <div class="demo-body">
+      <div class="controls">
+        <label class="switch"><input id="sup-scan" type="checkbox" checked/>必须展示官方扫描</label>
+        <label class="switch"><input id="sup-disable" type="checkbox" checked/>script-bearing 默认停用</label>
+        <label class="switch"><input id="sup-approve" type="checkbox" checked/>脚本执行走审批</label>
+        <label class="switch"><input id="sup-secret" type="checkbox"/>拦截「包内含密钥」样本</label>
+      </div>
+      <div class="sup-grid">
+        <div class="sup-table"><table id="sup-table"></table></div>
+        <div class="sup-side">
+          <div class="num-line"><span id="sup-pass">0</span><small> / 10 可安全启用</small></div>
+          <div class="row"><span>拦截的脚本样本</span><b id="sup-blocked-script">0</b></div>
+          <div class="row"><span>拦截的密钥样本</span><b id="sup-blocked-secret">0</b></div>
+          <div class="row"><span>残留风险（审批放行的脚本执行）</span><b id="sup-residual">0</b></div>
+          <p class="hintline" id="sup-note" style="margin-top:10px"></p>
+        </div>
+      </div>
+    </div>
+    <div class="demo-foot"><b>模型</b> 十份样本的属性（脚本 / 联网 / 密钥 / 自动更新）按真实生态分布构造，其中 #09 是「夹带密钥」样本、#10 是「更新投毒」样本。策略判定是布尔规则，不是评分——这也是真实门禁该有的样子。</div>
+  </div>
+</section>

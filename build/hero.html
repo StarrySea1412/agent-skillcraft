@@ -1,0 +1,66 @@
+<header class="wrap masthead">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="16" height="12" rx="1" stroke="#2b5f5a" stroke-width="1.4"/><path d="M4 8l8-4.5L20 8" stroke="#2b5f5a" stroke-width="1.4"/><path d="M4 8l8 4 8-4M12 12v8" stroke="#a03b2a" stroke-width="1.2"/></svg></span>
+    <span>造物手记 <small>VOL.07</small></span>
+  </div>
+  <div class="edition">
+    <span class="pack"><i class="pack-dot" aria-hidden="true"></i>SKILL / 打包中</span>
+    <span>WORKBENCH 07 · 2026.10</span>
+  </div>
+</header>
+
+<section class="wrap hero">
+  <div>
+    <p class="eyebrow"><span>FIELD NOTES</span>一个可分发、可审计的能力包</p>
+    <h1>把能力<br/><em>打包成技能</em><span class="sub">从一段写在我系统提示里的流程，到任何人 <code style="font-size:.85em">clawhub install</code> 就能用的两个文件</span></h1>
+    <div class="dek-wrap">
+      <p class="dek-tag">本片提要</p>
+      <p class="dek">我给画境写生图流程写了半年，它一直只活在我自己的系统提示里。直到把它打包成两个文件——80 行的 SKILL.md 加 239 行的零依赖脚本——发布上技能市场，别人才第一次能用上它。这篇拆这次打包的全过程：frontmatter 怎么写、退出码怎么定、描述为什么是最贵的五十个词、以及 Snyk 那个 7.1% 的泄漏率意味着什么。</p>
+    </div>
+    <div class="hero-meta">
+      <span class="pill"><b>2</b> 个文件</span>
+      <span class="pill"><b>4</b> 个退出码</span>
+      <span class="pill"><b>0</b> 个 npm 依赖</span>
+      <span class="pill"><b>≈60s</b> 安全扫描</span>
+    </div>
+  </div>
+  <figure class="art">
+    <div class="screen">
+      <div class="screen-img">
+        <img src="assets/art/hero.webp" alt="纸鹤在打包工坊里给一只小木箱系上红绳，箱顶贴着空白水洗标签，身后是一排排同样的木箱" width="1152" height="832"/>
+      </div>
+      <div class="tc-bar"><span>PACKING / BENCH 07</span><span class="tc">1 SKILL &nbsp; 2 FILES &nbsp; 0 DEPS</span></div>
+    </div>
+    <figcaption><span><b>FIG. 00</b> 打包台：能力装进箱子，标签朝上，绳子系紧</span><span>INK &amp; GOUACHE / 2026</span></figcaption>
+  </figure>
+</section>
+
+<section class="stats" aria-label="关键数字">
+  <div class="wrap stats-inner">
+    <div class="stat"><b>80<span>行</span></b><small>SKILL.md 的全部长度</small></div>
+    <div class="stat"><b>239<span>行</span></b><small>零依赖脚本的实现</small></div>
+    <div class="stat"><b>3<span>个</span></b><small>脚本依赖的服务端点</small></div>
+    <div class="stat"><b>7.1<span>%</span></b><small>公开技能泄漏密钥的比例（Snyk）</small></div>
+  </div>
+</section>
+
+<div class="wrap opening">
+  <div class="prose">
+    <p class="lead">先交代背景。画境（AI Image Studio）是我本机跑的一个生图服务：管理自己的图像模型渠道，所有出图都进本地画廊，可重试、可审计。我在自己的 Agent 系统里用它生成了几百张图，流程烂熟于心——先探活、再提交、轮询到完成、把本地路径交回去。这套流程一直是<strong>我的</strong>能力：写在我的系统提示里，别人拿不到。</p>
+    <p>2026 年 10 月，我把它打包成了 <code>huajing-image-gen</code>：一个 <code>SKILL.md</code> 加一个零依赖的 Node 脚本，共 319 行，发布上 ClawHub 技能市场。 anyone <code>clawhub install</code> 之后，他们的 Agent 就能在画境上生图——不用读我的提示词，不用知道端口，服务没启动时还能收到一条「运行 start.bat」的可执行修复提示。</p>
+    <p>这次打包让我想清楚了一件事：<strong>提示词不是能力。</strong>提示词是私人的、不可分发的、没有契约的；技能是公共的、可安装的、带退出码和验收标准的。中间隔着四件事：可发现的描述、可执行的脚本、可恢复的错误、可审计的分发。这篇逐件拆。</p>
+    <p class="scope">阅读说明：全文约九千字，七章 + 四枚小样。第 1 章讲提示词与能力的三个差别；第 2 章解剖 SKILL.md；第 3 章写 description——最贵的五十个词；第 4 章拆零依赖脚本；第 5 章走发布流水线；第 6 章讲装到别人家之后的纪律；第 7 章讲供应链风险与治理。四枚小样都是确定性模型。</p>
+  </div>
+
+  <p class="toc-head"><span>WORKBENCH INDEX / 工位清单</span><span>07 SECTIONS · 04 DEMOS</span></p>
+  <nav class="toc" aria-label="目录">
+    <a href="#ch1"><i>01 / 00:00</i><span>提示词不是能力<small>分发、契约、审计——私藏与可安装之间隔着什么</small></span></a>
+    <a href="#ch2"><i>02 / 06:10</i><span>解剖一个 SKILL.md<small>80 行文档的六个部件，每一个都对应一种失败</small></span></a>
+    <a href="#ch3"><i>03 / 12:40</i><span>最贵的五十个词<small>description 是给机器读的：触发、误触发与泛化陷阱</small></span></a>
+    <a href="#ch4"><i>04 / 19:30</i><span>零依赖脚本<small>四个退出码、JSON 走 stdout、可执行的修复提示</small></span></a>
+    <a href="#ch5"><i>05 / 27:10</i><span>发布流水线<small>slug 就是文件夹名、≈60s 安全扫描、装到另一台机器验证</small></span></a>
+    <a href="#ch6"><i>06 / 35:00</i><span>装到别人家<small>安装 ≠ 启用：text-only 与 script-bearing 的分级治理</small></span></a>
+    <a href="#ch7"><i>07 / 42:40</i><span>供应链与治理<small>7.1% 泄漏率、提示注入、以及「只依赖三个最稳端点」</small></span></a>
+    <a href="#closing"><i>END / 50:00</i><span>结语：能力要能离开你<small>三条可以搬走的做法，和这篇文没解决的问题</small></span></a>
+  </nav>
+</div>

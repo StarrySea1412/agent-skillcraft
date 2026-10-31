@@ -1,0 +1,80 @@
+<section class="chapter" id="ch3">
+  <div class="ch-head">
+    <div class="ch-num">SECTION<b>03</b></div>
+    <div class="ch-title">
+      <h2>最贵的五十个词</h2>
+      <p>description 是技能唯一的广告位：机器读它决定触发，写宽了误触发，写窄了永不被用。</p>
+    </div>
+  </div>
+  <div class="ch-body">
+    <p class="lede">一个技能装进别人家后，用户不会读你的 Usage——用户只说「帮我生成一张图」。是 Agent 在几十个已装技能里挑一个，挑的依据只有一个：<strong>每条技能的 description</strong>。这五十来个词是技能唯一的广告位，也是最容易被写成废话的五十个词。</p>
+    <p>把 <code>huajing-image-gen</code> 的 description 逐句拆开，看每个短语在买什么：</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>短语</th><th>它买到什么</th><th>删掉的后果</th></tr></thead>
+        <tbody>
+          <tr><td><b>Generate images through a local Huajing server</b></td><td>能力主语与边界：本地服务，不是云端 API</td><td>用户问「用 DALL·E 画图」时可能误触发</td></tr>
+          <tr><td><b>Use when the user asks to create or generate an image</b></td><td>核心触发：生成图片</td><td>最典型的请求无法命中，技能永不被用</td></tr>
+          <tr><td><b>polish an image prompt</b></td><td>次级触发：润色提示词</td><td><code>polish</code> 子命令永远闲置</td></tr>
+          <tr><td><b>look up previously generated images</b></td><td>次级触发：画廊检索</td><td>「上次那张图」类请求漏掉，重生成浪费渠道调用</td></tr>
+          <tr><td><b>Supports text-to-image with polling, batch, size, negative prompt…</b></td><td>能力边界：会轮询、可批量、支持负向词</td><td>Agent 不知道脚本会阻塞到完成，自己另写轮询</td></tr>
+          <tr><td><b>Requires the local server and Node 18+</b></td><td>前置条件：没装画境的机器不该选它</td><td>在没有服务的机器上被选中，然后 exit 2</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>三句话的结构由此而来：<strong>第一句立边界，第二句列触发，第三句交前提。</strong>Triggering 不是搜索匹配，是让另一个模型在「工具不足时判断该用什么」——它读的是语义，不是关键词。所以 description 里放「强大的」「下一代」这类形容词毫无用处，放「look up previously generated images」这种具体场景短语才有用。</p>
+
+    <h3>写宽与写窄</h3>
+    <p>description 有两种典型写坏法。<strong>写宽</strong>：把描述写成「图像生成工具」——于是用户问「帮我裁剪这张图」「这张图什么风格」时它也被选中，然后脚本 exit 3。误触发的代价不只是浪费一次调用：Agent 可能放弃原本正确的方案。<strong>写窄</strong>：把描述写成「用画境 HTTP API 生图」——只有用户明确提出「画境」才触发，而用户永远不知道画境是什么。</p>
+    <p>安全的写法是<strong>枚举触发场景，而不是枚举实现</strong>：写「generate an image」而不是「调用 /api/generations」，写「look up previously generated images」而不是「查询 gallery 表」。判断标准很简单：想象用户的原话，你的 description 里得有与之语义重合的短语。</p>
+    <div class="formula">
+      <div class="eq">触发可靠度 ≈ 场景短语与用户原话的语义重合度 &minus; 泛化词带来的误触发</div>
+      <small>Use when + 具体动词短语 · 能力边界（local/云端）· 前置条件（requires）</small>
+      <p class="why">这条「公式」没法精确计算——触发是另一个模型的行为。但它指出了调优方向：拿十条用户可能说的话，逐条检查 description 能否接住；再拿五条不该接的话，检查会不会被误接。这个 15 条的清单就是 description 的测试集。</p>
+    </div>
+
+    <h3>还有三个不是 description 的触发面</h3>
+    <ul>
+      <li><strong>name</strong>：用户说「用 huajing 生成」时按名字命中。所以 name 要含品牌词，同时保持 slug 一致。</li>
+      <li><strong>requires</strong>：前置条件不满足时，消费方应在选择阶段就把技能标灰——这比「触发后失败」的体验好一个量级。</li>
+      <li><strong>Notes 里的负向指引</strong>：「If generate exits 2, the server is not running」这类句子也在参与触发决策：Agent 读到它，就知道失败不是技能的错，不必换技能。</li>
+    </ul>
+    <div class="note"><b>一个还没做的改进：</b>描述调优目前靠人工想象用户的话。更好的做法是在自己家先积累「触发日志」——哪句话选中了技能、哪句话该选中却没选中——攒够二十条就是 description 的回归测试集。这与 VOL.06 里「评测集会腐烂」是同一个道理：触发描述也需要测试集，也会腐烂。</div>
+    <p>下面这枚小样模拟一次触发决策。输入一句用户原话，看六条技能如何按语义重合度竞争，再切换「泛化描述」开关，观察误触发怎么发生。</p>
+  </div>
+
+  <div class="demo" id="demo-trigger">
+    <div class="demo-head">
+      <span class="demo-tag">DEMO 02</span>
+      <span class="demo-title">触发实验台 <span class="hint">一句用户原话，六条技能竞争</span></span>
+    </div>
+    <div class="demo-body">
+      <div class="controls">
+        <div class="ctl" style="flex:2 1 260px">
+          <label for="trig-q">用户说</label>
+          <input id="trig-q" type="text" value="帮我生成一张图：一只纸鹤在木桌上" spellcheck="false"/>
+        </div>
+        <div class="ctl" style="flex:0 0 auto">
+          <label>预设原话</label>
+          <div class="seg" id="trig-presets">
+            <button data-q="帮我生成一张图：一只纸鹤在木桌上" aria-pressed="true">生成图片</button>
+            <button data-q="把刚才那张图的提示词润色一下" aria-pressed="false">润色提示词</button>
+            <button data-q="找一下上次生成的那张海报" aria-pressed="false">画廊检索</button>
+            <button data-q="帮我裁剪这张图片并调色" aria-pressed="false">不该触发</button>
+          </div>
+        </div>
+        <label class="switch"><input id="trig-broad" type="checkbox"/>把画境的描述改成泛化版「图像处理工具」</label>
+      </div>
+      <div class="trig-grid">
+        <div class="trig-rows" id="trig-rows"></div>
+        <div class="trig-side">
+          <div class="row"><span>命中技能</span><b id="trig-hit">—</b></div>
+          <div class="row"><span>命中分</span><b id="trig-score">—</b></div>
+          <div class="row"><span>触发阈值</span><b>0.30</b></div>
+          <div class="verdict" id="trig-verdict"></div>
+        </div>
+      </div>
+    </div>
+    <div class="demo-foot"><b>模型</b> 打分 = 词元重合（query∩desc / query，Jaccard 混合）+ 触发动词奖励（generate/create/look up/polish 等与原话动词命中各 +0.15），阈值 0.30。六条技能的描述里，huajing-image-gen 是原版英译回填，其余五条为演示构造。</div>
+  </div>
+</section>
