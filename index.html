@@ -571,7 +571,7 @@ input[type=text]:focus,select:focus{outline:2px solid var(--brass);outline-offse
       <li><strong>requires</strong>：前置条件不满足时，消费方应在选择阶段就把技能标灰——这比「触发后失败」的体验好一个量级。</li>
       <li><strong>Notes 里的负向指引</strong>：「If generate exits 2, the server is not running」这类句子也在参与触发决策：Agent 读到它，就知道失败不是技能的错，不必换技能。</li>
     </ul>
-    <div class="note"><b>一个还没做的改进：</b>描述调优目前靠人工想象用户的话。更好的做法是在自己家先积累「触发日志」——哪句话选中了技能、哪句话该选中却没选中——攒够二十条就是 description 的回归测试集。这与 VOL.06 里「评测集会腐烂」是同一个道理：触发描述也需要测试集，也会腐烂。</div>
+    <div class="note"><b>一个还没做的改进：</b>描述调优目前靠人工想象用户的话。更好的做法是在自己家先积累「触发日志」——哪句话选中了技能、哪句话该选中却没选中——攒够二十条就是 description 的回归测试集。这与 <a href="https://starrysea1412.github.io/agent-eval/" target="_blank" rel="noopener" style="text-decoration:underline dotted;text-underline-offset:3px">VOL.06</a> 里「评测集会腐烂」是同一个道理：触发描述也需要测试集，也会腐烂。</div>
     <p>下面这枚小样模拟一次触发决策。输入一句用户原话，看六条技能如何按语义重合度竞争，再切换「泛化描述」开关，观察误触发怎么发生。</p>
   </div>
 
@@ -1167,5 +1167,5 @@ node …/scripts/huajing.mjs health &amp;&amp; … generate --prompt <span class
 })();
 
 </script>
-</body>
+<div class="series-nav" style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:baseline;font-family:var(--mono,Consolas,monospace);font-size:11px;letter-spacing:1px;color:var(--muted,#8a959c);margin:26px 0 0;padding:16px 0 0;border-top:1px solid var(--line,#d8d8cc)"><a href="https://starrysea1412.github.io/agent-eval/" style="color:inherit">← VOL.06 给 Agent 打分</a><a href="https://starrysea1412.github.io/makers-notebook/" style="color:var(--orange,var(--steel,#3e5c6e));font-weight:700">☰ 全系列目录</a><a href="https://starrysea1412.github.io/agent-signals/" style="color:inherit">VOL.08 Agent 的三条信号线 →</a></div></body>
 </html>
